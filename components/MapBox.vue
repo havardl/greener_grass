@@ -83,8 +83,8 @@ export default {
         "pk.eyJ1IjoiaGF2YXJkbCIsImEiOiJtSTFleXg4In0.bCnuP121PLOPrqhdwUwYDA",
       selectedCoordinates: [],
       selectedName: "",
-      profile: 'cycling',
-      minutes: 10,
+      profile: "cycling",
+      minutes: "10,15,20"
     };
   },
   mounted() {
@@ -354,6 +354,7 @@ export default {
         lat +
         "?contours_minutes=" +
         this.minutes +
+        "&contours_colors=6706ce,04e813,4286f4" +
         "&polygons=true&denoise=1&access_token=" +
         this.token;
 
