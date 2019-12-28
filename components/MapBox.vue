@@ -379,24 +379,89 @@ export default {
         .$get(query)
         .then(response => {
           self.map.getSource("iso").setData(response);
+          console.log(response);
+
           let coordinates = response.features[0].geometry.coordinates[0];
 
-          // let lons = coordinates.map(function(elt) { return elt[0]; });
-          // let lats = coordinates.map(function(elt) { return elt[1]; });
+          // Polygon to linestring - use this for along sides?
+          var poly = turf.polygon([coordinates]);
+          var line = turf.polygonToLine(poly);
+          console.log(line);
+          line = turf.lineString(line.geometry.coordinates);
 
-          // let lon_min = this.getMin(lons)
-          // let lon_max = this.getMax(lons)
-          // let lat_min = this.getMin(lats)
-          // let lat_max = this.getMax(lats)
+          // show a marker every 200 meters
+          var distance = 0.2;
 
-          // let bounds = turf.square([lon_min, lat_min, lon_max, lat_max])
+          // get the line length in kilometers
+          var length = turf.lineDistance(line, {units: 'kilometers'});
+          for (var i = 1; i <= length / distance; i++) {
+            var turfPoint = turf.along(line, i * distance, {units: 'kilometers'});
+            console.log(turfPoint)
+            // // convert the generated point to a OpenLayers feature
+            // var marker = format.readFeature(turfPoint);
+            // marker.getGeometry().transform("EPSG:4326", "EPSG:3857");
+            // source.addFeature(marker);
+          }
+
+          // var options = {units: 'kilometers'};
+          // var along = turf.along(line, 0.1, options);
+          // console.log(along)
+
+          let lons = coordinates.map(function(elt) {
+            return elt[0];
+          });
+          let lats = coordinates.map(function(elt) {
+            return elt[1];
+          });
+
+          let lon_min = this.getMin(lons);
+          let lon_max = this.getMax(lons);
+          let lat_min = this.getMin(lats);
+          let lat_max = this.getMax(lats);
+
+          //let extent = turf.square([lon_min, lat_min, lon_max, lat_max]);
+          let extent = [lon_min, lat_min, lon_max, lat_max];
 
           var bounds = coordinates.reduce(function(bounds, coord) {
             return bounds.extend(coord);
           }, new window.mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
 
+          // var extent = [-70.823364, -33.553984, -70.473175, -33.302986];
+          var cellSide = 0.5;
+          var options = { units: "kilometers" };
+          var grid = turf.pointGrid(extent, cellSide, options);
+          //console.log(grid)
+
+          // Check if the points are within the actual polygon:
+          let pt = turf.point(this.selectedCoordinates);
+          var poly = turf.polygon([coordinates]);
+          let check = turf.booleanPointInPolygon(pt, poly);
+          //console.log(check);
+
+          let grid_within = grid.features.filter(point =>
+            point
+              ? turf.booleanPointInPolygon(
+                  turf.point(point.geometry.coordinates),
+                  poly
+                )
+              : false
+          );
+
+          console.log(grid_within);
+
+          grid_within.forEach(function(marker) {
+            // create a HTML element for each feature
+            var el = document.createElement("div");
+            el.className = "marker";
+
+            // make a marker for each feature and add to the map
+            new window.mapboxgl.Marker(el)
+              .setLngLat(marker.geometry.coordinates)
+              .addTo(self.map);
+          });
+
           self.map.fitBounds(bounds, {
-            padding: {top: 25, bottom:25, left: 200, right: 25}
+            padding: { top: 25, bottom: 25, left: 200, right: 25 }
           });
         })
         .catch(e => {

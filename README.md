@@ -33,22 +33,23 @@ https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Global_bounding_box
 
 ## TODO:
 
-- Get bounding box or just use polygon from Isochrone shape to use as shape to query the MET API from
-- Implement Turf.js to be able to select points within the shape to query from (to minimize amount of queries)
 - Implement Overpass API to find relevant places within the shape area (eg. beaches or mountain, forest etc)
 - Remove layers, markers etc. when new search is done
 - Show information somewhere static?
 - Implement a vueistic way for handling UI, triggering events etc
 - Add ebb and tide information
+- Add a to/from shortest path when clicking on a location
 
 ## Fixed:
 - Zoom the map to fit the isochrone shape (zoom in/out after the bbox of the shape)
 - Isochrone: color the shape in levels? [found solution - need to redo it]
+- Get bounding box or just use polygon from Isochrone shape to use as shape to query the MET API from
+- Implement Turf.js to be able to select points within the shape to query from (to minimize amount of queries)
 
 ## External documentation:
 
 - Isochrone: https://docs.mapbox.com/api/navigation/#isochrone
--
+- https://joeyklee.github.io/geosandbox/hello-turf.html#section10
 
 ### Ebb and tide
 https://api.sehavniva.no/tideapi_no.html
