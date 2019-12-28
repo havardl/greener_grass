@@ -35,6 +35,14 @@
             <input name="duration" type="radio" value="30" />
             <div class="toggle toggle--active-null toggle--null">30 min</div>
           </label>
+          <label class="toggle-container">
+            <input name="duration" type="radio" value="45" />
+            <div class="toggle toggle--active-null toggle--null">45 min</div>
+          </label>
+          <label class="toggle-container">
+            <input name="duration" type="radio" value="60" />
+            <div class="toggle toggle--active-null toggle--null">60 min</div>
+          </label>
         </div>
       </form>
     </div>
@@ -67,7 +75,7 @@
 </style>
 
 <script>
-import * as turf from '@turf/turf'
+import * as turf from "@turf/turf";
 
 export default {
   name: "MapBox",
@@ -373,17 +381,22 @@ export default {
           self.map.getSource("iso").setData(response);
           let coordinates = response.features[0].geometry.coordinates[0];
 
-          let lons = coordinates.map(function(elt) { return elt[0]; });
-          let lats = coordinates.map(function(elt) { return elt[1]; });
-          
-          let lon_min = this.getMin(lons)
-          let lon_max = this.getMax(lons)
-          let lat_min = this.getMin(lats)
-          let lat_max = this.getMax(lats)
+          // let lons = coordinates.map(function(elt) { return elt[0]; });
+          // let lats = coordinates.map(function(elt) { return elt[1]; });
 
-          let bounds = turf.square([lon_min, lat_min, lon_max, lat_max])
+          // let lon_min = this.getMin(lons)
+          // let lon_max = this.getMax(lons)
+          // let lat_min = this.getMin(lats)
+          // let lat_max = this.getMax(lats)
+
+          // let bounds = turf.square([lon_min, lat_min, lon_max, lat_max])
+
+          var bounds = coordinates.reduce(function(bounds, coord) {
+            return bounds.extend(coord);
+          }, new window.mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+
           self.map.fitBounds(bounds, {
-            padding: 20
+            padding: {top: 25, bottom:25, left: 200, right: 25}
           });
         })
         .catch(e => {
@@ -392,7 +405,7 @@ export default {
         });
     },
     getMin(arr) {
-      const min = Math.min(...[].concat(...arr));        
+      const min = Math.min(...[].concat(...arr));
       return min;
     },
     getMax(arr) {
