@@ -41,12 +41,21 @@ https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Global_bounding_box
 - Show information somewhere static?
 - Implement a vueistic way for handling UI, triggering events etc
 - Isochrone: color the shape in levels? [found solution - need to redo it]
-
+- Add ebb and tide information
 
 ## External documentation:
 
 - Isochrone: https://docs.mapbox.com/api/navigation/#isochrone
 -
+
+### Ebb and tide
+https://api.sehavniva.no/tideapi_no.html
+
+https://api.sehavniva.no/tideapi.php?lat=68.79889&lon=16.53139&fromtime=2019-12-28T00%3A00&totime=2020-01-29T00%3A00&datatype=tab&refcode=cd&place=&file=&lang=nb&interval=10&dst=0&tzone=&tide_request=locationdata
+
+https://api.sehavniva.no/tideapi.php?lat=68.79889&lon=16.53139&fromtime=2019-12-28T00%3A00&totime=2020-01-29T00%3A00&datatype=tab&refcode=cd&place=&file=&lang=nb&interval=10&dst=0&tzone=0&tide_request=locationdata
+
+http://api.sehavniva.no/tideapi.php?lat=68.79889&lon=16.53139&fromtime=2019-12-28T00%3A00&totime=2020-01-29T00%3A00&datatype=tab&refcode=cd&place=&file=&lang=nb&interval=60&dst=0&tzone=0&tide_request=locationdata
 
 ## Build Setup
 

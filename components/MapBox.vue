@@ -4,6 +4,7 @@
       class="absolute fl my24 mx24 py24 px24 bg-gray-faint round"
       style="z-index:999"
     >
+      <div id="geocoder"></div>
       <form id="params">
         <h4 class="txt-m txt-bold mb6">Chose a travel mode:</h4>
         <div class="mb12 mr12 toggle-group align-center">
@@ -66,6 +67,8 @@
 </style>
 
 <script>
+import * as turf from '@turf/turf'
+
 export default {
   name: "MapBox",
   props: {
@@ -84,7 +87,7 @@ export default {
       selectedCoordinates: [],
       selectedName: "",
       profile: "cycling",
-      minutes: "10,15,20"
+      minutes: 10
     };
   },
   mounted() {
@@ -123,7 +126,10 @@ export default {
         }
         //mapboxgl: window.mapboxgl
       });
-      this.map.addControl(this.geocoder);
+      //this.map.addControl(this.geocoder);
+      document
+        .getElementById("geocoder")
+        .appendChild(this.geocoder.onAdd(this.map));
 
       this.map.on("load", () => {
         // this.removeInteractive();
@@ -354,21 +360,44 @@ export default {
         lat +
         "?contours_minutes=" +
         this.minutes +
-        "&contours_colors=6706ce,04e813,4286f4" +
         "&polygons=true&denoise=1&access_token=" +
         this.token;
+
+      // Various color for minutes:
+      //"&contours_colors=6706ce,04e813,4286f4" +
 
       console.log(query);
       const res = await this.$axios
         .$get(query)
         .then(response => {
-          console.log(response);
           self.map.getSource("iso").setData(response);
+          let coordinates = response.features[0].geometry.coordinates[0];
+
+          let lons = coordinates.map(function(elt) { return elt[0]; });
+          let lats = coordinates.map(function(elt) { return elt[1]; });
+          
+          let lon_min = this.getMin(lons)
+          let lon_max = this.getMax(lons)
+          let lat_min = this.getMin(lats)
+          let lat_max = this.getMax(lats)
+
+          let bounds = turf.square([lon_min, lat_min, lon_max, lat_max])
+          self.map.fitBounds(bounds, {
+            padding: 20
+          });
         })
         .catch(e => {
           console.log("error", e);
           //error({ statusCode: 401, message: "Post not found" });
         });
+    },
+    getMin(arr) {
+      const min = Math.min(...[].concat(...arr));        
+      return min;
+    },
+    getMax(arr) {
+      const max = Math.max(...[].concat(...arr));
+      return max;
     }
   }
 };
