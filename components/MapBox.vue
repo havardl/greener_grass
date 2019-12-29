@@ -100,7 +100,8 @@ export default {
       profile: "cycling",
       minutes: 10,
       allMarkers: [],
-      allPoints: []
+      allPoints: [],
+      clusteredPoints: []
     };
   },
   mounted() {
@@ -149,6 +150,48 @@ export default {
         // this.addMarkers();
         this.addIsoUI();
         this.addIsoLayer();
+      });
+      // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
+      this.map.on("click", function(e) {
+        // var features = self.map.queryRenderedFeatures(e.point);
+
+        // // Limit the number of properties we're displaying for
+        // // legibility and performance
+        // var displayProperties = [
+        //   "type",
+        //   "properties",
+        //   "id",
+        //   "layer",
+        //   "source",
+        //   "sourceLayer",
+        //   "state"
+        // ];
+
+        // var displayFeatures = features.map(function(feat) {
+        //   var displayFeat = {};
+        //   displayProperties.forEach(function(prop) {
+        //     displayFeat[prop] = feat[prop];
+        //   });
+        //   return displayFeat;
+        // });
+        // console.log(displayFeatures)
+
+        let clickedCoords = [e.lngLat.lng, e.lngLat.lat];
+        let outsideBounds = true;
+        for (let existingPoint of self.clusteredPoints) {
+          let distance = turf.distance(
+            turf.point(clickedCoords),
+            existingPoint,
+            { units: "kilometers" }
+          );
+          if (distance <= 0.5) {
+            outsideBounds = false;
+            break;
+          }
+        }
+        if (outsideBounds) {
+          self.getPointWeather(clickedCoords);
+        }
       });
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
@@ -291,10 +334,10 @@ export default {
           1}:00`
       );
     },
-    async getMetWeatherForecast(arr) {
+    async getMetWeatherForecast(coordinates) {
       let self = this;
-      let lng = arr[0];
-      let lat = arr[1];
+      let lng = coordinates[0];
+      let lat = coordinates[1];
 
       let base_url = "https://api.met.no/weatherapi/locationforecast/1.9/?";
       let url = base_url + "lat=" + lat + "&lon=" + lng;
@@ -308,6 +351,31 @@ export default {
           } else {
             console.log(result);
             this.data = self.getData(result);
+          }
+        });
+      });
+    },
+    async getPointWeather(coordinates) {
+      console.log(coordinates);
+      let self = this;
+      let lng = coordinates[0];
+      let lat = coordinates[1];
+
+      let base_url = "https://api.met.no/weatherapi/locationforecast/1.9/?";
+      let url = base_url + "lat=" + lat + "&lon=" + lng;
+      console.log(url);
+
+      // Convert XML to JS object
+      let parseString = require("xml2js").parseString;
+      let res = await this.$axios.$get(url).then(response => {
+        parseString(response, (err, result) => {
+          if (err) {
+            console.log("Error fetching data:", err);
+          } else {
+            let weather = self.getData(result);
+            console.log(weather);
+
+            self.addWeatherMarkerToMap(coordinates, weather);
           }
         });
       });
@@ -373,6 +441,7 @@ export default {
           : false
       );
 
+      // If the time is before the first forecast, just show the first one:
       if (forecasts[0] === undefined) {
         return symbolWeaterData[0];
       } else {
@@ -383,8 +452,6 @@ export default {
     async getIso() {
       let self = this;
       let urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
-      // var profile = "cycling";
-      // var minutes = 10;
       let lon = this.selectedCoordinates[0];
       let lat = this.selectedCoordinates[1];
 
@@ -408,8 +475,6 @@ export default {
         .$get(query)
         .then(response => {
           self.map.getSource("iso").setData(response);
-          //console.log(response);
-
           let coordinates = response.features[0].geometry.coordinates[0];
 
           // Polygon to linestring - use this for along sides?
@@ -428,7 +493,7 @@ export default {
             let point = turf.along(line, i * distance, {
               units: "kilometers"
             });
-            //self.addMarkerToMap(point);
+            //self.addMarkerToMap(point.geometry.coordinates);
             self.allPoints.push(point);
           }
 
@@ -471,7 +536,7 @@ export default {
 
           // Add markers to map
           grid_within.forEach(function(marker) {
-            //self.addMarkerToMap(marker);
+            //self.addMarkerToMap(marker.geometry.coordinates);
             self.allPoints.push(turf.point(marker.geometry.coordinates));
           });
 
@@ -479,15 +544,21 @@ export default {
             padding: { top: 25, bottom: 25, left: 200, right: 25 }
           });
 
-          var clustered = turf.clustersKmeans(turf.featureCollection(self.allPoints), { numberOfClusters: 10 });
-          // var cluster = turf.getCluster(clustered, {cluster: 0});
-          // console.log(cluster)
+          // Create clusters from the grid points
+          var clustered = turf.clustersKmeans(
+            turf.featureCollection(self.allPoints),
+            { numberOfClusters: 10 }
+          );
           // Iterate over each cluster
-          turf.clusterEach(clustered, 'cluster', function (cluster, clusterValue, currentIndex) {
+          turf.clusterEach(clustered, "cluster", function(
+            cluster,
+            clusterValue,
+            currentIndex
+          ) {
             let clusterCenter = turf.center(cluster);
-            console.log(clusterCenter)
-            self.addMarkerToMap(clusterCenter)
-          })          
+            self.clusteredPoints.push(clusterCenter);
+            self.addMarkerToMap(clusterCenter.geometry.coordinates);
+          });
         })
         .catch(e => {
           console.log("error", e);
@@ -502,7 +573,7 @@ export default {
       const max = Math.max(...[].concat(...arr));
       return max;
     },
-    addMarkerToMap(marker) {
+    addMarkerToMap(coordinates) {
       let self = this;
       // create a HTML element for each feature
       var el = document.createElement("div");
@@ -510,7 +581,37 @@ export default {
 
       // make a marker for each feature and add to the map
       let new_marker = new window.mapboxgl.Marker(el)
-        .setLngLat(marker.geometry.coordinates)
+        .setLngLat(coordinates)
+        .addTo(self.map);
+      self.allMarkers.push(new_marker);
+    },
+    addWeatherMarkerToMap(coordinates, data) {
+      let self = this;
+      // create a HTML element for each feature
+      var el = document.createElement("div");
+      el.className = "marker";
+
+      // make a marker for each feature and add to the map
+      let new_marker = new window.mapboxgl.Marker(el)
+        .setLngLat(coordinates)
+        .setPopup(
+          new window.mapboxgl.Popup({ offset: 25 }) // add popups
+            .setHTML(
+              "<p><b>Temp (celsius)</b>: mellom " +
+                data.minTemperature.value +
+                " og " +
+                data.maxTemperature.value +
+                "</p>" +
+                "<p><b>Nedbør (mm):</b> mellom " +
+                data.precipitation.minvalue +
+                " og " +
+                data.precipitation.maxvalue +
+                "</p>" +
+                "<img src=" +
+                self.getMetWeatherIcon(data.symbol.number) +
+                " />"
+            )
+        )
         .addTo(self.map);
       self.allMarkers.push(new_marker);
     },
