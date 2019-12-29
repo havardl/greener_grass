@@ -4,6 +4,11 @@
       class="absolute fl my24 mx24 py24 px24 bg-gray-faint round"
       style="z-index:999"
     >
+      <div>
+        <button v-on:click="removeAllMarkersFromMap">
+          Remove markers
+        </button>
+      </div>
       <div id="geocoder"></div>
       <form id="params">
         <h4 class="txt-m txt-bold mb6">Chose a travel mode:</h4>
@@ -82,8 +87,6 @@ export default {
   props: {
     center: Array,
     marker: Object
-    // icon: String,
-    // data: Object
   },
   data: function() {
     return {
@@ -95,7 +98,9 @@ export default {
       selectedCoordinates: [],
       selectedName: "",
       profile: "cycling",
-      minutes: 10
+      minutes: 10,
+      allMarkers: [],
+      allPoints: []
     };
   },
   mounted() {
@@ -148,7 +153,6 @@ export default {
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
         // https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#on
-        console.log(result);
         self.getWeather(result);
       });
     },
@@ -181,6 +185,30 @@ export default {
           type: "fill",
           // Use "iso" as the data source for this layer
           source: "iso",
+          layout: {},
+          paint: {
+            // The fill color for the layer is set to a light purple
+            "fill-color": "#5a3fc0",
+            "fill-opacity": 0.3
+          }
+        },
+        "poi-label"
+      );
+
+      this.map.addSource("iso_tess", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: []
+        }
+      });
+
+      this.map.addLayer(
+        {
+          id: "isoTessLayer",
+          type: "fill",
+          // Use "iso" as the data source for this layer
+          source: "iso_tess",
           layout: {},
           paint: {
             // The fill color for the layer is set to a light purple
@@ -271,6 +299,7 @@ export default {
       let base_url = "https://api.met.no/weatherapi/locationforecast/1.9/?";
       let url = base_url + "lat=" + lat + "&lon=" + lng;
 
+      // Convert XML to JS object
       let parseString = require("xml2js").parseString;
       const res = await this.$axios.$get(url).then(response => {
         parseString(response, (err, result) => {
@@ -334,7 +363,7 @@ export default {
       );
       // Filter the data down:
       let symbolWeaterData = weaterData.filter(x => x.symbolProbability);
-      // console.log(symbolWeaterData)
+
       // Get the prediction where the current time is within the 6 hrs timeframe:
       let current_time = this.shittyTimeRounder(new Date()).getTime();
       let forecasts = symbolWeaterData.filter(forecast =>
@@ -379,37 +408,34 @@ export default {
         .$get(query)
         .then(response => {
           self.map.getSource("iso").setData(response);
-          console.log(response);
+          //console.log(response);
 
           let coordinates = response.features[0].geometry.coordinates[0];
 
           // Polygon to linestring - use this for along sides?
-          var poly = turf.polygon([coordinates]);
-          var line = turf.polygonToLine(poly);
-          console.log(line);
+          let poly = turf.polygon([coordinates]);
+          let line = turf.polygonToLine(poly);
           line = turf.lineString(line.geometry.coordinates);
 
-          // show a marker every 200 meters
-          var distance = 0.2;
+          // Create tesselate within polygon
+          let tess = turf.tesselate(poly);
+          self.map.getSource("iso_tess").setData(tess);
 
           // get the line length in kilometers
-          var length = turf.lineDistance(line, {units: 'kilometers'});
-          for (var i = 1; i <= length / distance; i++) {
-            var turfPoint = turf.along(line, i * distance, {units: 'kilometers'});
-            console.log(turfPoint)
-            // // convert the generated point to a OpenLayers feature
-            // var marker = format.readFeature(turfPoint);
-            // marker.getGeometry().transform("EPSG:4326", "EPSG:3857");
-            // source.addFeature(marker);
+          let distance = 0.5;
+          let length = turf.lineDistance(line, { units: "kilometers" });
+          for (let i = 1; i <= length / distance; i++) {
+            let point = turf.along(line, i * distance, {
+              units: "kilometers"
+            });
+            //self.addMarkerToMap(point);
+            self.allPoints.push(point);
           }
-
-          // var options = {units: 'kilometers'};
-          // var along = turf.along(line, 0.1, options);
-          // console.log(along)
 
           let lons = coordinates.map(function(elt) {
             return elt[0];
           });
+
           let lats = coordinates.map(function(elt) {
             return elt[1];
           });
@@ -418,26 +444,22 @@ export default {
           let lon_max = this.getMax(lons);
           let lat_min = this.getMin(lats);
           let lat_max = this.getMax(lats);
-
-          //let extent = turf.square([lon_min, lat_min, lon_max, lat_max]);
           let extent = [lon_min, lat_min, lon_max, lat_max];
 
-          var bounds = coordinates.reduce(function(bounds, coord) {
+          let bounds = coordinates.reduce(function(bounds, coord) {
             return bounds.extend(coord);
           }, new window.mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
 
-          // var extent = [-70.823364, -33.553984, -70.473175, -33.302986];
-          var cellSide = 0.5;
-          var options = { units: "kilometers" };
-          var grid = turf.pointGrid(extent, cellSide, options);
-          //console.log(grid)
+          let cellSide = 0.5;
+          let options = { units: "kilometers" };
+          let grid = turf.pointGrid(extent, cellSide, options);
 
-          // Check if the points are within the actual polygon:
-          let pt = turf.point(this.selectedCoordinates);
-          var poly = turf.polygon([coordinates]);
-          let check = turf.booleanPointInPolygon(pt, poly);
-          //console.log(check);
+          // // Check if the points are within the actual polygon:
+          // let pt = turf.point(this.selectedCoordinates);
+          // var poly = turf.polygon([coordinates]);
+          // let check = turf.booleanPointInPolygon(pt, poly);
 
+          // Filter out points outside our polygon
           let grid_within = grid.features.filter(point =>
             point
               ? turf.booleanPointInPolygon(
@@ -447,22 +469,25 @@ export default {
               : false
           );
 
-          console.log(grid_within);
-
+          // Add markers to map
           grid_within.forEach(function(marker) {
-            // create a HTML element for each feature
-            var el = document.createElement("div");
-            el.className = "marker";
-
-            // make a marker for each feature and add to the map
-            new window.mapboxgl.Marker(el)
-              .setLngLat(marker.geometry.coordinates)
-              .addTo(self.map);
+            //self.addMarkerToMap(marker);
+            self.allPoints.push(turf.point(marker.geometry.coordinates));
           });
 
           self.map.fitBounds(bounds, {
             padding: { top: 25, bottom: 25, left: 200, right: 25 }
           });
+
+          var clustered = turf.clustersKmeans(turf.featureCollection(self.allPoints), { numberOfClusters: 10 });
+          // var cluster = turf.getCluster(clustered, {cluster: 0});
+          // console.log(cluster)
+          // Iterate over each cluster
+          turf.clusterEach(clustered, 'cluster', function (cluster, clusterValue, currentIndex) {
+            let clusterCenter = turf.center(cluster);
+            console.log(clusterCenter)
+            self.addMarkerToMap(clusterCenter)
+          })          
         })
         .catch(e => {
           console.log("error", e);
@@ -476,6 +501,26 @@ export default {
     getMax(arr) {
       const max = Math.max(...[].concat(...arr));
       return max;
+    },
+    addMarkerToMap(marker) {
+      let self = this;
+      // create a HTML element for each feature
+      var el = document.createElement("div");
+      el.className = "marker";
+
+      // make a marker for each feature and add to the map
+      let new_marker = new window.mapboxgl.Marker(el)
+        .setLngLat(marker.geometry.coordinates)
+        .addTo(self.map);
+      self.allMarkers.push(new_marker);
+    },
+    removeAllMarkersFromMap() {
+      // remove all added markers
+      if (this.allMarkers !== null) {
+        for (let i = this.allMarkers.length - 1; i >= 0; i--) {
+          this.allMarkers[i].remove();
+        }
+      }
     }
   }
 };
