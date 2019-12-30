@@ -274,13 +274,14 @@ export default {
       let self = this;
       let params = document.getElementById("params");
       params.addEventListener("change", function(e) {
-        self.removeAllMarkersFromMap();
+        //self.removeAllMarkersFromMap();
         if (e.target.name === "profile") {
           self.profile = e.target.value;
         } else if (e.target.name === "duration") {
           self.minutes = e.target.value;
         }
-        if (self.selectedCoordinates.lenght < 0) {
+        if (self.selectedName != "") {
+          console.log("get iso")
           self.getIso();
         }
       });
