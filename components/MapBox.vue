@@ -376,6 +376,7 @@ export default {
             console.log(weather);
 
             self.addWeatherMarkerToMap(coordinates, weather);
+            self.addDirectionRouteToMap(coordinates);
           }
         });
       });
@@ -574,6 +575,7 @@ export default {
       return max;
     },
     addMarkerToMap(coordinates) {
+      // Add a marker without popup to the map
       let self = this;
       // create a HTML element for each feature
       var el = document.createElement("div");
@@ -586,34 +588,49 @@ export default {
       self.allMarkers.push(new_marker);
     },
     addWeatherMarkerToMap(coordinates, data) {
+      // Add a weather marker after clicking on the map
+
       let self = this;
       // create a HTML element for each feature
       var el = document.createElement("div");
       el.className = "marker";
 
-      // make a marker for each feature and add to the map
-      let new_marker = new window.mapboxgl.Marker(el)
-        .setLngLat(coordinates)
-        .setPopup(
-          new window.mapboxgl.Popup({ offset: 25 }) // add popups
-            .setHTML(
-              "<p><b>Temp (celsius)</b>: mellom " +
-                data.minTemperature.value +
-                " og " +
-                data.maxTemperature.value +
-                "</p>" +
-                "<p><b>Nedbør (mm):</b> mellom " +
-                data.precipitation.minvalue +
-                " og " +
-                data.precipitation.maxvalue +
-                "</p>" +
-                "<img src=" +
-                self.getMetWeatherIcon(data.symbol.number) +
-                " />"
-            )
-        )
-        .addTo(self.map);
-      self.allMarkers.push(new_marker);
+      // Get the place name using MapBox's reverese geocoder
+      let place = this.getNamedPlace(coordinates).then(function(res) {
+        // make a marker for each feature and add to the map
+        let new_marker = new window.mapboxgl.Marker(el)
+          .setLngLat(coordinates)
+          .setPopup(
+            new window.mapboxgl.Popup({ offset: 25 }) // add popups
+              .setHTML(
+                "<h3>" +
+                  res.features[0].text +
+                  ", " +
+                  res.features[1].text +
+                  "</h3>" +
+                  "<p><b>Temp (celsius)</b>: mellom " +
+                  data.minTemperature.value +
+                  " og " +
+                  data.maxTemperature.value +
+                  "</p>" +
+                  "<p><b>Nedbør (mm):</b> mellom " +
+                  data.precipitation.minvalue +
+                  " og " +
+                  data.precipitation.maxvalue +
+                  "</p>" +
+                  "<img src=" +
+                  self.getMetWeatherIcon(data.symbol.number) +
+                  " />"
+              )
+          )
+          .addTo(self.map);
+        self.allMarkers.push(new_marker);
+      });
+    },
+    addDirectionRouteToMap(coordinates) {
+      let directions = this.getDirections(coordinates).then(function(result) {
+        console.log(result);
+      });
     },
     removeAllMarkersFromMap() {
       // remove all added markers
@@ -622,6 +639,64 @@ export default {
           this.allMarkers[i].remove();
         }
       }
+    },
+    async getNamedPlace(coordinates) {
+      // Get the name (address + place) of specific coordinates
+      let self = this;
+      let lng = coordinates[0];
+      let lat = coordinates[1];
+
+      let base_url = "https://api.mapbox.com/geocoding/v5/mapbox.places/";
+      let url =
+        base_url +
+        lng +
+        "," +
+        lat +
+        ".json" +
+        "?types=address,place" +
+        "&access_token=" +
+        this.token;
+      console.log(url);
+      let res = await this.$axios.$get(url).then(response => {
+        return response;
+      });
+      return res;
+    },
+    async getDirections(coordinates) {
+      // Get directions from the selected spot to a given set of coordinates
+      let self = this;
+      let lng = coordinates[0];
+      let lat = coordinates[1];
+
+      let base_url = "https://api.mapbox.com/directions/v5/mapbox/";
+      let url =
+        base_url +
+        this.profile +
+        "/" +
+        this.selectedCoordinates[0] +
+        "," +
+        this.selectedCoordinates[1] +
+        ";" +
+        lng +
+        "," +
+        lat +
+        "?geometries=geojson" +
+        "&access_token=" +
+        this.token;
+      console.log(url);
+
+      let res = await this.$axios
+        .$get(url)
+        .then(response => {
+          if (response.code === "Ok") {
+            return response;
+          }
+        })
+        .catch(e => {
+          console.log("error", e);
+          //error({ statusCode: 401, message: "Post not found" });
+        });
+      return res;
     }
   }
 };
