@@ -131,6 +131,7 @@
 
 <script>
 import * as turf from "@turf/turf";
+import axios from "axios"
 
 export default {
   name: "MapBox",
@@ -253,6 +254,7 @@ export default {
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
         // https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#on
+        console.log(result);
         self.getWeather(result);
       });
     },
@@ -398,13 +400,12 @@ export default {
 
       // Convert XML to JS object
       let parseString = require("xml2js").parseString;
-      const res = await this.$axios.$get(url).then(response => {
-        parseString(response, (err, result) => {
+      const res = await axios.get(url).then(response => {
+        parseString(response.data, (err, result) => {
           if (err) {
             console.log("Error fetching data:", err);
           } else {
-            //console.log(result);
-            this.data = self.getData(result);
+            self.data = self.getData(result);
           }
         });
       });
@@ -420,8 +421,8 @@ export default {
 
       // Convert XML to JS object
       let parseString = require("xml2js").parseString;
-      let res = await this.$axios.$get(url).then(response => {
-        parseString(response, (err, result) => {
+      let res = await axios.get(url).then(response => {
+        parseString(response.data, (err, result) => {
           if (err) {
             console.log("Error fetching data:", err);
           } else {
@@ -525,12 +526,13 @@ export default {
       //"&contours_colors=6706ce,04e813,4286f4" +
 
       //console.log(query);
-      const res = await this.$axios
-        .$get(query)
+      const res = await axios
+        .get(query)
         .then(response => {
+          console.log(response)
           // Add isochrones:
-          self.map.getSource("iso").setData(response);
-          let coordinates = response.features[0].geometry.coordinates[0];
+          self.map.getSource("iso").setData(response.data);
+          let coordinates = response.data.features[0].geometry.coordinates[0];
 
           // Polygon to linestring - use this for along side and calculations on the markers
           let poly = turf.polygon([coordinates]);
@@ -695,7 +697,7 @@ export default {
 
       // Get the place name using MapBox's reverese geocoder
       let place = this.getNamedPlace(coordinates).then(function(res) {
-        marker_text.innerHTML = res.features[1].text;
+        marker_text.innerHTML = res.data.features[1].text;
         marker_attr.innerHTML =
           data.minTemperature.value +
           " - " +
@@ -709,9 +711,9 @@ export default {
             new window.mapboxgl.Popup({ offset: 25 }) // add popups
               .setHTML(
                 "<h3>" +
-                  res.features[0].text +
+                  res.data.features[0].text +
                   ", " +
-                  res.features[1].text +
+                  res.data.features[1].text +
                   "</h3>" +
                   "<p><b>Temp (celsius)</b>: mellom " +
                   data.minTemperature.value +
@@ -733,8 +735,9 @@ export default {
     addDirectionRouteToMap(coordinates) {
       let self = this;
       let directions = this.getDirections(coordinates).then(function(result) {
-        self.selectedDistance = result.routes[0].distance * 0.001; // convert to km
-        self.selectedDuration = result.routes[0].duration / 60; // convert to minutes
+        console.log(result)
+        self.selectedDistance = result.data.routes[0].distance * 0.001; // convert to km
+        self.selectedDuration = result.data.routes[0].duration / 60; // convert to minutes
 
         // add results to info box
         // document.getElementById("calculated-line").innerHTML =
@@ -743,7 +746,7 @@ export default {
         //   " km<br>Duration: " +
         //   duration.toFixed(2) +
         //   " minutes";
-        self.addRoute(result.routes[0].geometry);
+        self.addRoute(result.data.routes[0].geometry);
       });
     },
     removeAllMarkersFromMap() {
@@ -771,7 +774,7 @@ export default {
         "&access_token=" +
         this.token;
       //console.log(url);
-      let res = await this.$axios.$get(url).then(response => {
+      let res = await axios.get(url).then(response => {
         return response;
       });
       return res;
@@ -800,8 +803,8 @@ export default {
         this.token;
       //console.log(url);
 
-      let res = await this.$axios
-        .$get(url)
+      let res = await axios
+        .get(url)
         .then(response => {
           if (response.code === "Ok") {
             return response;
