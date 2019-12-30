@@ -250,9 +250,6 @@ export default {
           self.getPointWeather(clickedCoords, true);
         }
       });
-      this.map.on("click", "marker-container", function(e) {
-        console.log("Clicked a marker: ", e)
-      });
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
         // https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#on
@@ -406,21 +403,20 @@ export default {
           if (err) {
             console.log("Error fetching data:", err);
           } else {
-            console.log(result);
+            //console.log(result);
             this.data = self.getData(result);
           }
         });
       });
     },
     async getPointWeather(coordinates, get_directions=false) {
-      console.log(coordinates);
       let self = this;
       let lng = coordinates[0];
       let lat = coordinates[1];
 
       let base_url = "https://api.met.no/weatherapi/locationforecast/1.9/?";
       let url = base_url + "lat=" + lat + "&lon=" + lng;
-      console.log(url);
+      //console.log(url);
 
       // Convert XML to JS object
       let parseString = require("xml2js").parseString;
@@ -430,8 +426,6 @@ export default {
             console.log("Error fetching data:", err);
           } else {
             let weather = self.getData(result);
-            console.log(weather);
-
             self.addWeatherMarkerToMap(coordinates, weather);
             if(get_directions) {
               self.addDirectionRouteToMap(coordinates);
@@ -530,7 +524,7 @@ export default {
       // Various color for minutes:
       //"&contours_colors=6706ce,04e813,4286f4" +
 
-      console.log(query);
+      //console.log(query);
       const res = await this.$axios
         .$get(query)
         .then(response => {
@@ -670,27 +664,34 @@ export default {
       // create a HTML element for each feature
       let el = document.createElement("div");
       el.className = "marker-container";
+      let lng = coordinates[0];
+      let lat = coordinates[1];      
+      el.dataset.lng = lng;
+      el.dataset.lat = lat;
+      el.addEventListener('click', function(e) {
+        let clickedCoords = [parseFloat(e.target.attributes["data-lng"].value), parseFloat(e.target.attributes["data-lat"].value)]
+        self.addDirectionRouteToMap(clickedCoords)
+      });           
 
       let marker_symbol = document.createElement("div");
       marker_symbol.className = "marker-symbol";
       let symbol = self.getMetWeatherIcon(data.symbol.number);
       marker_symbol.style.backgroundImage = "url(" + symbol + ")";
+      marker_symbol.dataset.lng = lng;
+      marker_symbol.dataset.lat = lat;
       el.appendChild(marker_symbol);
 
       let marker_text = document.createElement("div");
       marker_text.className = "marker-text";
+      marker_text.dataset.lng = lng;
+      marker_text.dataset.lat = lat;
       el.appendChild(marker_text);
 
       let marker_attr = document.createElement("div");
       marker_attr.className = "marker-attr";
-      el.appendChild(marker_attr);
-
-      el.addEventListener('click', function(e) {
-        console.log(e);
-        //el.remove();  
-        // let clickedCoords = [e.lngLat.lng, e.lngLat.lat];
-        //console.log(self.selectedCoordinates, clickedCoords);
-      });      
+      marker_attr.dataset.lng = lng;
+      marker_attr.dataset.lat = lat;
+      el.appendChild(marker_attr); 
 
       // Get the place name using MapBox's reverese geocoder
       let place = this.getNamedPlace(coordinates).then(function(res) {
@@ -721,10 +722,7 @@ export default {
                   data.precipitation.minvalue +
                   " og " +
                   data.precipitation.maxvalue +
-                  "</p>" +
-                  "<img src=" +
-                  symbol +
-                  " />"
+                  "</p>"
               )
           )
           .addTo(self.map);
@@ -772,7 +770,7 @@ export default {
         "?types=address,place" +
         "&access_token=" +
         this.token;
-      console.log(url);
+      //console.log(url);
       let res = await this.$axios.$get(url).then(response => {
         return response;
       });
@@ -800,7 +798,7 @@ export default {
         "&overview=full" +
         "&access_token=" +
         this.token;
-      console.log(url);
+      //console.log(url);
 
       let res = await this.$axios
         .$get(url)

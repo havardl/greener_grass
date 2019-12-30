@@ -37,8 +37,7 @@ https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Global_bounding_box
 - Show information somewhere static?
 - Implement a vueistic way for handling UI, triggering events etc
 - Add ebb and tide information
-- Hide weather icons on zoom out
-- Get lat/lng from a marker and calculate the shortest trip (how to access the markers info?)
+- Hide weather icons on zoom out [might have to switch to marker layer, to be able to do this.]
 
 ## Fixed:
 - Zoom the map to fit the isochrone shape (zoom in/out after the bbox of the shape)
@@ -47,6 +46,7 @@ https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Global_bounding_box
 - Implement Turf.js to be able to select points within the shape to query from (to minimize amount of queries)
 - Add a to/from shortest path when clicking on a location
 - Get place name or address based on lat,lng? 
+- Get lat/lng from a marker and calculate the shortest trip (how to access the markers info?)
 
 ## External documentation:
 
