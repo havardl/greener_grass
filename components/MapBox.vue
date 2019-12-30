@@ -106,7 +106,7 @@ export default {
       selectedMarker: Object,
       selectedName: "",
       selectedDistance: 0,
-      selectedDuration: 0,      
+      selectedDuration: 0,
       profile: "cycling",
       minutes: 10,
       allMarkers: [],
@@ -539,11 +539,15 @@ export default {
           // let check = turf.booleanPointInPolygon(pt, poly);
 
           // Filter out points outside our polygon
+          let scaledPoly = turf.transformScale(poly, 0.5);
           let grid_within = grid.features.filter(point =>
             point
               ? turf.booleanPointInPolygon(
                   turf.point(point.geometry.coordinates),
                   poly
+                ) && !turf.booleanPointInPolygon(
+                  turf.point(point.geometry.coordinates),
+                  scaledPoly
                 )
               : false
           );
@@ -553,7 +557,6 @@ export default {
             //self.addMarkerToMap(marker.geometry.coordinates);
             self.allPoints.push(turf.point(marker.geometry.coordinates));
           });
-
           self.map.fitBounds(bounds, {
             padding: { top: 25, bottom: 25, left: 200, right: 25 }
           });
@@ -563,6 +566,7 @@ export default {
             turf.featureCollection(self.allPoints),
             { numberOfClusters: 20 }
           );
+
           // Iterate over each cluster
           turf.clusterEach(clustered, "cluster", function(
             cluster,
