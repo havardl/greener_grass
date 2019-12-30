@@ -33,10 +33,12 @@ https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Global_bounding_box
 
 ## TODO:
 - Implement Overpass API to find relevant places within the shape area (eg. beaches or mountain, forest etc)
-- Remove layers, markers etc. when new search is done
+- Remove layers, markers etc. when new search (place, profile of transport and time) is run
 - Show information somewhere static?
 - Implement a vueistic way for handling UI, triggering events etc
 - Add ebb and tide information
+- Hide weather icons on zoom out
+- Get lat/lng from a marker and calculate the shortest trip (how to access the markers info?)
 
 ## Fixed:
 - Zoom the map to fit the isochrone shape (zoom in/out after the bbox of the shape)

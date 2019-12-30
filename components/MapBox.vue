@@ -29,12 +29,8 @@
         <h4 class="txt-m txt-bold mb6">Chose a maximum duration:</h4>
         <div class="mb12 mr12 toggle-group align-center">
           <label class="toggle-container">
-            <input name="duration" type="radio" value="10" checked />
-            <div class="toggle toggle--active-null toggle--null">10 min</div>
-          </label>
-          <label class="toggle-container">
-            <input name="duration" type="radio" value="20" />
-            <div class="toggle toggle--active-null toggle--null">20 min</div>
+            <input name="duration" type="radio" value="15" checked />
+            <div class="toggle toggle--active-null toggle--null">15 min</div>
           </label>
           <label class="toggle-container">
             <input name="duration" type="radio" value="30" />
@@ -55,15 +51,62 @@
 </template>
 
 <style lang="scss">
-.marker {
-  background-image: url("~assets/custom_marker.png");
+.marker-container {
+  cursor: pointer;
+  width: 80px;
+  text-align: center;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -moz-box;
+  display: -moz-flex;
+  display: -ms-flexbox;
+  display: flex;
+
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  -moz-justify-content: center;
+  justify-content: center;
+
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  -moz-align-items: center;
+  align-items: center;
+
+  flex-direction: column;
+}
+.marker-symbol {
   background-size: cover;
-  width: 40px;
+  width: 60px;
   height: 60px;
   display: block;
+  text-align: center;
+}
+.marker-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+  // -webkit-text-stroke: 1px #fff;
+  text-shadow: 1px 1px 0 #fff;
+}
+.marker-attr {
+  font-size: 12px;
+  font-weight: normal;
+  color: #000;
+}
+.selected-marker {
+  background-color: #f86767;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
+  border: 3px solid #fff;
   cursor: pointer;
 }
-.weather-marker {
+.marker {
+  //background-image: url("~assets/custom_marker.png");
+  background-image: url("https://www.yr.no/grafikk/sym/v2017/symbol_background_pin.svg");
   background-size: cover;
   width: 60px;
   height: 60px;
@@ -108,7 +151,7 @@ export default {
       selectedDistance: 0,
       selectedDuration: 0,
       profile: "cycling",
-      minutes: 10,
+      minutes: 15,
       allMarkers: [],
       allPoints: [],
       clusteredPoints: [],
@@ -125,7 +168,7 @@ export default {
   watch: {
     data() {
       this.getIso();
-      this.addMarkers();
+      this.addSelectedLocation();
     }
   },
   methods: {
@@ -158,7 +201,6 @@ export default {
 
       this.map.on("load", () => {
         // this.removeInteractive();
-        // this.addMarkers();
         this.addIsoUI();
         this.addIsoLayer();
       });
@@ -189,7 +231,9 @@ export default {
 
         let clickedCoords = [e.lngLat.lng, e.lngLat.lat];
         let outsideBounds = true;
-        let allReleventPoints = self.clusteredPoints.concat(turf.point(self.selectedCoordinates)).concat(self.userAddedPoints)
+        let allReleventPoints = self.clusteredPoints
+          .concat(turf.point(self.selectedCoordinates))
+          .concat(self.userAddedPoints);
         for (let existingPoint of allReleventPoints) {
           let distance = turf.distance(
             turf.point(clickedCoords),
@@ -202,8 +246,12 @@ export default {
           }
         }
         if (outsideBounds) {
-          self.getPointWeather(clickedCoords);
+          // If the clicked point is outside the radius of .5 km from other markers, add it with directions:
+          self.getPointWeather(clickedCoords, true);
         }
+      });
+      this.map.on("click", "marker-container", function(e) {
+        console.log("Clicked a marker: ", e)
       });
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
@@ -282,10 +330,10 @@ export default {
       this.map.doubleClickZoom.disable();
       this.map.touchZoomRotate.disable();
     },
-    addMarkers() {
+    addSelectedLocation() {
       let self = this;
       var el = document.createElement("div");
-      el.className = "marker";
+      el.className = "selected-marker";
 
       // make a marker for each feature and add it to the map
       let selected_marker = new window.mapboxgl.Marker(el)
@@ -312,20 +360,19 @@ export default {
             )
         )
         .addTo(self.map);
-        this.selectedMarker = selected_marker;
+      this.selectedMarker = selected_marker;
     },
-    getMetWeatherIcon(symbol_id, night = 0) {
-      // Build the url we need to get a specific icon
+    getMetWeatherIcon(symbol_id, night = 0, type = "svg") {
+      // Build the url we need to get a specific weather icon
       let base_url = "https://api.met.no/weatherapi/weathericon/1.1/?";
       let content_type_png = "&content_type=image/png";
       let content_type_svg = "&content_type=image/svg%2Bxml";
-      let url =
-        base_url +
-        "symbol=" +
-        symbol_id +
-        "&is_night=" +
-        night +
-        content_type_svg;
+      let url = base_url + "symbol=" + symbol_id + "&is_night=" + night;
+      if (type === "svg") {
+        url = url + content_type_svg;
+      } else {
+        url = url + content_type_png;
+      }
       return url;
     },
     getWeather: function(place) {
@@ -365,7 +412,7 @@ export default {
         });
       });
     },
-    async getPointWeather(coordinates) {
+    async getPointWeather(coordinates, get_directions=false) {
       console.log(coordinates);
       let self = this;
       let lng = coordinates[0];
@@ -386,7 +433,9 @@ export default {
             console.log(weather);
 
             self.addWeatherMarkerToMap(coordinates, weather);
-            self.addDirectionRouteToMap(coordinates);
+            if(get_directions) {
+              self.addDirectionRouteToMap(coordinates);
+            }
           }
         });
       });
@@ -486,22 +535,22 @@ export default {
         .$get(query)
         .then(response => {
           // Add isochrones:
-          //self.map.getSource("iso").setData(response);
+          self.map.getSource("iso").setData(response);
           let coordinates = response.features[0].geometry.coordinates[0];
 
-          // Polygon to linestring - use this for along sides?
+          // Polygon to linestring - use this for along side and calculations on the markers
           let poly = turf.polygon([coordinates]);
           let line = turf.polygonToLine(poly);
           line = turf.lineString(line.geometry.coordinates);
 
-          // Create tesselate within polygon
-          let tess = turf.tesselate(poly);
-          // Add tesselate:
-          self.map.getSource("iso_tess").setData(tess);
-          console.log(self.map.getSource("iso_tess"));
+          // // Create tesselate within polygon
+          // let tess = turf.tesselate(poly);
+          // // Add tesselate:
+          // self.map.getSource("iso_tess").setData(tess);
+          // console.log(self.map.getSource("iso_tess"));
 
-          // get the line length in kilometers
-          let distance = 0.5;
+          // Add points along the edge of the shape
+          let distance = 1;
           let length = turf.lineDistance(line, { units: "kilometers" });
           for (let i = 1; i <= length / distance; i++) {
             let point = turf.along(line, i * distance, {
@@ -545,7 +594,8 @@ export default {
               ? turf.booleanPointInPolygon(
                   turf.point(point.geometry.coordinates),
                   poly
-                ) && !turf.booleanPointInPolygon(
+                ) &&
+                !turf.booleanPointInPolygon(
                   turf.point(point.geometry.coordinates),
                   scaledPoly
                 )
@@ -574,9 +624,16 @@ export default {
             currentIndex
           ) {
             let clusterCenter = turf.center(cluster);
-            if (turf.booleanPointInPolygon(turf.point(clusterCenter.geometry.coordinates),poly)) {
+            if (
+              turf.booleanPointInPolygon(
+                turf.point(clusterCenter.geometry.coordinates),
+                poly
+              )
+            ) {
               self.clusteredPoints.push(clusterCenter);
-              self.addMarkerToMap(clusterCenter.geometry.coordinates);
+              //self.addMarkerToMap(clusterCenter.geometry.coordinates);
+              // Get weather for the center of the cluster and add icon to the map:
+              self.getPointWeather(clusterCenter.geometry.coordinates, false);
             }
           });
         })
@@ -611,13 +668,39 @@ export default {
 
       let self = this;
       // create a HTML element for each feature
-      var el = document.createElement("div");
-      el.className = "weather-marker";
+      let el = document.createElement("div");
+      el.className = "marker-container";
+
+      let marker_symbol = document.createElement("div");
+      marker_symbol.className = "marker-symbol";
       let symbol = self.getMetWeatherIcon(data.symbol.number);
-      el.style.backgroundImage = 'url(' + symbol + ')';
+      marker_symbol.style.backgroundImage = "url(" + symbol + ")";
+      el.appendChild(marker_symbol);
+
+      let marker_text = document.createElement("div");
+      marker_text.className = "marker-text";
+      el.appendChild(marker_text);
+
+      let marker_attr = document.createElement("div");
+      marker_attr.className = "marker-attr";
+      el.appendChild(marker_attr);
+
+      el.addEventListener('click', function(e) {
+        console.log(e);
+        //el.remove();  
+        // let clickedCoords = [e.lngLat.lng, e.lngLat.lat];
+        //console.log(self.selectedCoordinates, clickedCoords);
+      });      
 
       // Get the place name using MapBox's reverese geocoder
       let place = this.getNamedPlace(coordinates).then(function(res) {
+        marker_text.innerHTML = res.features[1].text;
+        marker_attr.innerHTML =
+          data.minTemperature.value +
+          " - " +
+          data.maxTemperature.value +
+          "&#176;";
+
         // make a marker for each feature and add to the map
         let new_marker = new window.mapboxgl.Marker(el)
           .setLngLat(coordinates)
@@ -646,7 +729,7 @@ export default {
           )
           .addTo(self.map);
         self.allMarkers.push(new_marker);
-        self.userAddedPoints.push(turf.point(coordinates))
+        self.userAddedPoints.push(turf.point(coordinates));
       });
     },
     addDirectionRouteToMap(coordinates) {
