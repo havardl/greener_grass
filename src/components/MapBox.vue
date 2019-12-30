@@ -254,7 +254,6 @@ export default {
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
         // https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#on
-        console.log(result);
         self.getWeather(result);
       });
     },
@@ -262,6 +261,7 @@ export default {
       let self = this;
       let params = document.getElementById("params");
       params.addEventListener("change", function(e) {
+        self.removeAllMarkersFromMap();
         if (e.target.name === "profile") {
           self.profile = e.target.value;
           self.getIso();
@@ -340,9 +340,9 @@ export default {
         .setPopup(
           new window.mapboxgl.Popup({ offset: 25 }) // add popups
             .setHTML(
-              "<h3>Sted: " +
+              "<h5>Sted: " +
                 this.selectedName +
-                "</h3>" +
+                "</h5>" +
                 "<p><b>Temp (celsius)</b>: mellom " +
                 self.data.minTemperature.value +
                 " og " +
@@ -710,11 +710,11 @@ export default {
           .setPopup(
             new window.mapboxgl.Popup({ offset: 25 }) // add popups
               .setHTML(
-                "<h3>" +
+                "<h5>" +
                   res.data.features[0].text +
                   ", " +
                   res.data.features[1].text +
-                  "</h3>" +
+                  "</h5>" +
                   "<p><b>Temp (celsius)</b>: mellom " +
                   data.minTemperature.value +
                   " og " +
@@ -736,8 +736,8 @@ export default {
       let self = this;
       let directions = this.getDirections(coordinates).then(function(result) {
         console.log(result)
-        self.selectedDistance = result.data.routes[0].distance * 0.001; // convert to km
-        self.selectedDuration = result.data.routes[0].duration / 60; // convert to minutes
+        self.selectedDistance = result.routes[0].distance * 0.001; // convert to km
+        self.selectedDuration = result.routes[0].duration / 60; // convert to minutes
 
         // add results to info box
         // document.getElementById("calculated-line").innerHTML =
@@ -746,7 +746,7 @@ export default {
         //   " km<br>Duration: " +
         //   duration.toFixed(2) +
         //   " minutes";
-        self.addRoute(result.data.routes[0].geometry);
+        self.addRoute(result.routes[0].geometry);
       });
     },
     removeAllMarkersFromMap() {
@@ -801,13 +801,16 @@ export default {
         "&overview=full" +
         "&access_token=" +
         this.token;
-      //console.log(url);
+      console.log(url);
 
       let res = await axios
         .get(url)
         .then(response => {
-          if (response.code === "Ok") {
-            return response;
+          if (response.data.code === "Ok") {
+            return response.data;
+          } else {
+            console.log("We got a different code returned: ", response.data.code);
+            console.log(response)
           }
         })
         .catch(e => {
