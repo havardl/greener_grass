@@ -1,5 +1,7 @@
 # weather
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/e4fa8399-b7e7-4cd5-b898-fd82dd1b34a2/deploy-status)](https://app.netlify.com/sites/greenergrass/deploys)
+
 > Weather app
 
 Uses the MET API to get weather data from relevant points: https://api.met.no/weatherapi/locationforecast/1.9/documentation

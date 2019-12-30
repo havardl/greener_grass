@@ -131,7 +131,7 @@
 
 <script>
 import * as turf from "@turf/turf";
-import axios from "axios"
+import axios from "axios";
 
 export default {
   name: "MapBox",
@@ -156,7 +156,8 @@ export default {
       allMarkers: [],
       allPoints: [],
       clusteredPoints: [],
-      userAddedPoints: []
+      userAddedPoints: [],
+      flying: false
     };
   },
   mounted() {
@@ -189,11 +190,14 @@ export default {
       // init the map
       this.map = new window.mapboxgl.Map(mapOptions);
       this.geocoder = new window.MapboxGeocoder({
+        // Settings from: https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md
         accessToken: this.token,
-        marker: {
-          color: "orange"
-        }
-        //mapboxgl: window.mapboxgl
+        flyTo: false,
+        marker: false,
+        mapboxgl: window.mapboxgl,
+        placeholder: "Søk etter sted",
+        collapsed: true,
+        countries: "NO"
       });
       //this.map.addControl(this.geocoder);
       document
@@ -251,6 +255,15 @@ export default {
           self.getPointWeather(clickedCoords, true);
         }
       });
+      this.map.on("flystart", function() {
+        self.flying = true;
+      });
+      this.map.on("flyend", function() {
+        self.flying = false;
+      });
+      this.map.on("moveend", function() {
+        console.log("Stopped moving");
+      });
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
         // https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#on
@@ -264,9 +277,10 @@ export default {
         self.removeAllMarkersFromMap();
         if (e.target.name === "profile") {
           self.profile = e.target.value;
-          self.getIso();
         } else if (e.target.name === "duration") {
           self.minutes = e.target.value;
+        }
+        if (self.selectedCoordinates.lenght < 0) {
           self.getIso();
         }
       });
@@ -410,7 +424,7 @@ export default {
         });
       });
     },
-    async getPointWeather(coordinates, get_directions=false) {
+    async getPointWeather(coordinates, get_directions = false) {
       let self = this;
       let lng = coordinates[0];
       let lat = coordinates[1];
@@ -428,7 +442,7 @@ export default {
           } else {
             let weather = self.getData(result);
             self.addWeatherMarkerToMap(coordinates, weather);
-            if(get_directions) {
+            if (get_directions) {
               self.addDirectionRouteToMap(coordinates);
             }
           }
@@ -529,7 +543,7 @@ export default {
       const res = await axios
         .get(query)
         .then(response => {
-          console.log(response)
+          console.log(response);
           // Add isochrones:
           self.map.getSource("iso").setData(response.data);
           let coordinates = response.data.features[0].geometry.coordinates[0];
@@ -667,13 +681,16 @@ export default {
       let el = document.createElement("div");
       el.className = "marker-container";
       let lng = coordinates[0];
-      let lat = coordinates[1];      
+      let lat = coordinates[1];
       el.dataset.lng = lng;
       el.dataset.lat = lat;
-      el.addEventListener('click', function(e) {
-        let clickedCoords = [parseFloat(e.target.attributes["data-lng"].value), parseFloat(e.target.attributes["data-lat"].value)]
-        self.addDirectionRouteToMap(clickedCoords)
-      });           
+      el.addEventListener("click", function(e) {
+        let clickedCoords = [
+          parseFloat(e.target.attributes["data-lng"].value),
+          parseFloat(e.target.attributes["data-lat"].value)
+        ];
+        self.addDirectionRouteToMap(clickedCoords);
+      });
 
       let marker_symbol = document.createElement("div");
       marker_symbol.className = "marker-symbol";
@@ -693,7 +710,7 @@ export default {
       marker_attr.className = "marker-attr";
       marker_attr.dataset.lng = lng;
       marker_attr.dataset.lat = lat;
-      el.appendChild(marker_attr); 
+      el.appendChild(marker_attr);
 
       // Get the place name using MapBox's reverese geocoder
       let place = this.getNamedPlace(coordinates).then(function(res) {
@@ -735,7 +752,7 @@ export default {
     addDirectionRouteToMap(coordinates) {
       let self = this;
       let directions = this.getDirections(coordinates).then(function(result) {
-        console.log(result)
+        console.log(result);
         self.selectedDistance = result.routes[0].distance * 0.001; // convert to km
         self.selectedDuration = result.routes[0].duration / 60; // convert to minutes
 
@@ -809,8 +826,11 @@ export default {
           if (response.data.code === "Ok") {
             return response.data;
           } else {
-            console.log("We got a different code returned: ", response.data.code);
-            console.log(response)
+            console.log(
+              "We got a different code returned: ",
+              response.data.code
+            );
+            console.log(response);
           }
         })
         .catch(e => {
