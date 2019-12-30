@@ -97,11 +97,13 @@ export default {
         "pk.eyJ1IjoiaGF2YXJkbCIsImEiOiJtSTFleXg4In0.bCnuP121PLOPrqhdwUwYDA",
       selectedCoordinates: [],
       selectedName: "",
+      selectedDistance: 0,
+      selectedDuration: 0,      
       profile: "cycling",
       minutes: 10,
       allMarkers: [],
       allPoints: [],
-      clusteredPoints: []
+      clusteredPoints: [],
     };
   },
   mounted() {
@@ -221,7 +223,6 @@ export default {
           features: []
         }
       });
-
       this.map.addLayer(
         {
           id: "isoLayer",
@@ -245,12 +246,10 @@ export default {
           features: []
         }
       });
-
       this.map.addLayer(
         {
           id: "isoTessLayer",
           type: "fill",
-          // Use "iso" as the data source for this layer
           source: "iso_tess",
           layout: {},
           paint: {
@@ -261,6 +260,29 @@ export default {
         },
         "poi-label"
       );
+
+      // this.map.addSource("directions", {
+      //   type: "geojson",
+      //   data: {
+      //     type: "Feature",
+      //     properties: {},
+      //     geometry: {}
+      //   }
+      // });
+
+      // this.map.addLayer({
+      //   id: "directionsLayer",
+      //   type: "line",
+      //   source: "directions",
+      //   layout: {
+      //     "line-join": "round",
+      //     "line-cap": "round"
+      //   },
+      //   paint: {
+      //     "line-color": "#5a3fc0",
+      //     "line-width": 8
+      //   }
+      // });
     },
     removeInteractive() {
       // set layer visibility
@@ -475,7 +497,8 @@ export default {
       const res = await this.$axios
         .$get(query)
         .then(response => {
-          self.map.getSource("iso").setData(response);
+          // Add isochrones:
+          //self.map.getSource("iso").setData(response);
           let coordinates = response.features[0].geometry.coordinates[0];
 
           // Polygon to linestring - use this for along sides?
@@ -485,7 +508,9 @@ export default {
 
           // Create tesselate within polygon
           let tess = turf.tesselate(poly);
+          // Add tesselate:
           self.map.getSource("iso_tess").setData(tess);
+          console.log(self.map.getSource("iso_tess"));
 
           // get the line length in kilometers
           let distance = 0.5;
@@ -628,8 +653,19 @@ export default {
       });
     },
     addDirectionRouteToMap(coordinates) {
+      let self = this;
       let directions = this.getDirections(coordinates).then(function(result) {
-        console.log(result);
+        self.selectedDistance = result.routes[0].distance * 0.001; // convert to km
+        self.selectedDuration = result.routes[0].duration / 60; // convert to minutes
+
+        // add results to info box
+        // document.getElementById("calculated-line").innerHTML =
+        //   "Distance: " +
+        //   distance.toFixed(2) +
+        //   " km<br>Duration: " +
+        //   duration.toFixed(2) +
+        //   " minutes";
+        self.addRoute(result.routes[0].geometry);
       });
     },
     removeAllMarkersFromMap() {
@@ -697,6 +733,39 @@ export default {
           //error({ statusCode: 401, message: "Post not found" });
         });
       return res;
+    },
+    addRoute(coords) {
+      // Remove, then re-add the layer:
+      this.removeRoute();
+      this.map.addLayer({
+        id: "route",
+        type: "line",
+        source: {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            properties: {},
+            geometry: coords
+          }
+        },
+        layout: {
+          "line-join": "round",
+          "line-cap": "round"
+        },
+        paint: {
+          "line-color": "#3b9ddd",
+          "line-width": 8,
+          "line-opacity": 0.8
+        }
+      });
+    },
+    removeRoute() {
+      if (this.map.getSource("route")) {
+        this.map.removeLayer("route");
+        this.map.removeSource("route");
+      } else {
+        return;
+      }
     }
   }
 };
