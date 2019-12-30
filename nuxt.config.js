@@ -24,8 +24,7 @@ export default {
   */
   css: [
     "../node_modules/mapbox-gl/dist/mapbox-gl.css",
-    "../node_modules//mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css",
-    '@/assets/assembly.min.css'
+    "../node_modules/@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css",    
   ],
   /*
   ** Plugins to load before mounting the App
@@ -36,17 +35,15 @@ export default {
   ** Nuxt.js dev-modules
   */
   buildModules: [
-    // Doc: https://github.com/nuxt-community/eslint-module
-    // '@nuxtjs/eslint-module'
   ],
   /*
   ** Nuxt.js modules
   */
   modules: [
-    // Doc: https://buefy.github.io/#/documentation
-    'nuxt-buefy',
+    // Doc: https://bootstrap-vue.js.org
+    'bootstrap-vue/nuxt',
     // Doc: https://axios.nuxtjs.org/usage
-    '@nuxtjs/axios'
+    '@nuxtjs/axios',
   ],
   /*
   ** Axios module configuration
@@ -61,9 +58,7 @@ export default {
     /*
     ** You can extend webpack config here
     */
-   vendor: ['axios', 'mapbox-gl', 'moment'],
     extend (config, ctx) {
-      config.module.noParse = /(mapbox-gl)\.js$/
     }
   }
 }
