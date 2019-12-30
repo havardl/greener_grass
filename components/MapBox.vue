@@ -63,6 +63,13 @@
   display: block;
   cursor: pointer;
 }
+.weather-marker {
+  background-size: cover;
+  width: 60px;
+  height: 60px;
+  display: block;
+  cursor: pointer;
+}
 .map {
   width: 100%;
   height: 100%;
@@ -260,29 +267,6 @@ export default {
         },
         "poi-label"
       );
-
-      // this.map.addSource("directions", {
-      //   type: "geojson",
-      //   data: {
-      //     type: "Feature",
-      //     properties: {},
-      //     geometry: {}
-      //   }
-      // });
-
-      // this.map.addLayer({
-      //   id: "directionsLayer",
-      //   type: "line",
-      //   source: "directions",
-      //   layout: {
-      //     "line-join": "round",
-      //     "line-cap": "round"
-      //   },
-      //   paint: {
-      //     "line-color": "#5a3fc0",
-      //     "line-width": 8
-      //   }
-      // });
     },
     removeInteractive() {
       // set layer visibility
@@ -573,7 +557,7 @@ export default {
           // Create clusters from the grid points
           var clustered = turf.clustersKmeans(
             turf.featureCollection(self.allPoints),
-            { numberOfClusters: 10 }
+            { numberOfClusters: 20 }
           );
           // Iterate over each cluster
           turf.clusterEach(clustered, "cluster", function(
@@ -582,8 +566,10 @@ export default {
             currentIndex
           ) {
             let clusterCenter = turf.center(cluster);
-            self.clusteredPoints.push(clusterCenter);
-            self.addMarkerToMap(clusterCenter.geometry.coordinates);
+            if (turf.booleanPointInPolygon(turf.point(clusterCenter.geometry.coordinates),poly)) {
+              self.clusteredPoints.push(clusterCenter);
+              self.addMarkerToMap(clusterCenter.geometry.coordinates);
+            }
           });
         })
         .catch(e => {
@@ -618,7 +604,9 @@ export default {
       let self = this;
       // create a HTML element for each feature
       var el = document.createElement("div");
-      el.className = "marker";
+      el.className = "weather-marker";
+      let symbol = self.getMetWeatherIcon(data.symbol.number);
+      el.style.backgroundImage = 'url(' + symbol + ')';
 
       // Get the place name using MapBox's reverese geocoder
       let place = this.getNamedPlace(coordinates).then(function(res) {
@@ -644,7 +632,7 @@ export default {
                   data.precipitation.maxvalue +
                   "</p>" +
                   "<img src=" +
-                  self.getMetWeatherIcon(data.symbol.number) +
+                  symbol +
                   " />"
               )
           )
@@ -717,6 +705,7 @@ export default {
         "," +
         lat +
         "?geometries=geojson" +
+        "&overview=full" +
         "&access_token=" +
         this.token;
       console.log(url);
