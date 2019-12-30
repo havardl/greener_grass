@@ -103,6 +103,7 @@ export default {
       token:
         "pk.eyJ1IjoiaGF2YXJkbCIsImEiOiJtSTFleXg4In0.bCnuP121PLOPrqhdwUwYDA",
       selectedCoordinates: [],
+      selectedMarker: Object,
       selectedName: "",
       selectedDistance: 0,
       selectedDuration: 0,      
@@ -111,6 +112,7 @@ export default {
       allMarkers: [],
       allPoints: [],
       clusteredPoints: [],
+      userAddedPoints: []
     };
   },
   mounted() {
@@ -187,7 +189,8 @@ export default {
 
         let clickedCoords = [e.lngLat.lng, e.lngLat.lat];
         let outsideBounds = true;
-        for (let existingPoint of self.clusteredPoints) {
+        let allReleventPoints = self.clusteredPoints.concat(turf.point(self.selectedCoordinates)).concat(self.userAddedPoints)
+        for (let existingPoint of allReleventPoints) {
           let distance = turf.distance(
             turf.point(clickedCoords),
             existingPoint,
@@ -285,7 +288,7 @@ export default {
       el.className = "marker";
 
       // make a marker for each feature and add it to the map
-      new window.mapboxgl.Marker(el)
+      let selected_marker = new window.mapboxgl.Marker(el)
         .setLngLat(this.selectedCoordinates)
         .setPopup(
           new window.mapboxgl.Popup({ offset: 25 }) // add popups
@@ -309,6 +312,7 @@ export default {
             )
         )
         .addTo(self.map);
+        this.selectedMarker = selected_marker;
     },
     getMetWeatherIcon(symbol_id, night = 0) {
       // Build the url we need to get a specific icon
@@ -638,6 +642,7 @@ export default {
           )
           .addTo(self.map);
         self.allMarkers.push(new_marker);
+        self.userAddedPoints.push(turf.point(coordinates))
       });
     },
     addDirectionRouteToMap(coordinates) {
