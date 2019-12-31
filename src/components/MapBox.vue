@@ -333,7 +333,7 @@ export default {
         mapboxgl: window.mapboxgl,
         placeholder: "Søk etter sted",
         collapsed: true,
-        countries: "NO"
+        countries: "NO,DK,SE"
       });
       //this.map.addControl(this.geocoder);
       document
@@ -341,7 +341,6 @@ export default {
         .appendChild(this.geocoder.onAdd(this.map));
 
       this.map.on("load", () => {
-        // this.removeInteractive();
         this.addIsoUI();
         this.addIsoLayer();
       });
@@ -349,11 +348,12 @@ export default {
         let self = this;
         const waiting = () => {
           if (!self.map.isStyleLoaded()) {
+            self.stillLoading();
             setTimeout(waiting, 200);
           } else {
             //loadMyLayers();
+            self.finishedLoading();
             self.loading = false;
-            console.log(self.loading);
           }
         };
         waiting();
@@ -493,6 +493,17 @@ export default {
       this.map.doubleClickZoom.disable();
       this.map.touchZoomRotate.disable();
     },
+    addInteractive() {
+      // set layer visibility
+      // turn off interactivity
+      this.map.scrollZoom.enable();
+      this.map.boxZoom.enable();
+      this.map.dragRotate.enable();
+      this.map.dragPan.enable();
+      this.map.keyboard.enable();
+      this.map.doubleClickZoom.enable();
+      this.map.touchZoomRotate.enable();
+    },    
     addSelectedLocation() {
       let self = this;
       var el = document.createElement("div");
@@ -1021,6 +1032,12 @@ export default {
       } else {
         return;
       }
+    },
+    stillLoading() {
+      this.removeInteractive()
+    },
+    finishedLoading() {
+      this.addInteractive()
     }
   }
 };
