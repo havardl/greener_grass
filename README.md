@@ -34,12 +34,14 @@ https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Global_bounding_box
 
 
 ## TODO:
+- Implement Entur.no API to get oublic transporation routes in Norway.
 - Implement Overpass API to find relevant places within the shape area (eg. beaches or mountain, forest etc)
 - Remove layers, markers etc. when new search (place, profile of transport and time) is run
 - Show information somewhere static?
 - Implement a vueistic way for handling UI, triggering events etc
 - Add ebb and tide information
 - Hide weather icons on zoom out [might have to switch to marker layer, to be able to do this.]
+- Prompt user for location on load
 
 ## Fixed:
 - Zoom the map to fit the isochrone shape (zoom in/out after the bbox of the shape)
