@@ -1,6 +1,12 @@
 <template>
   <div id="map" class="map">
-    <div
+    <div class="loader" v-if="loading">
+      <div class="text-center">
+        <b-spinner variant="primary" label="Text Centered"></b-spinner>
+        <p>loading</p>
+      </div>
+    </div>
+    <!-- <div
       class="absolute fl my24 mx24 py24 px24 bg-gray-faint round"
       style="z-index:999"
     >
@@ -46,11 +52,145 @@
           </label>
         </div>
       </form>
+    </div> -->
+    <div class="ui">
+      <div class="ui-widget">
+        <b-container fluid>
+          <b-row>
+            <b-col sm="10">
+              <b-collapse id="collapse-1" class="mt-2">
+                <b-card class="ui-content">
+                  <div>
+                    <button v-on:click="removeAllMarkersFromMap">
+                      Remove markers
+                    </button>
+                  </div>
+                  <div id="geocoder"></div>
+                  <!-- <b-button v-b-toggle.collapse-1-inner size="sm">Toggle Inner Collapse</b-button>
+            <b-collapse id="collapse-1-inner" class="mt-2">
+              <b-card>Hello!</b-card>
+            </b-collapse> -->
+
+                  <form id="params">
+                    <h4 class="txt-m txt-bold mb6">Chose a travel mode:</h4>
+                    <div class="mb12 mr12 toggle-group align-center">
+                      <label class="toggle-container">
+                        <input name="profile" type="radio" value="walking" />
+                        <div class="toggle toggle--active-null toggle--null">
+                          Walking
+                        </div>
+                      </label>
+                      <label class="toggle-container">
+                        <input
+                          name="profile"
+                          type="radio"
+                          value="cycling"
+                          checked
+                        />
+                        <div class="toggle toggle--active-null toggle--null">
+                          Cycling
+                        </div>
+                      </label>
+                      <label class="toggle-container">
+                        <input name="profile" type="radio" value="driving" />
+                        <div class="toggle toggle--active-null toggle--null">
+                          Driving
+                        </div>
+                      </label>
+                    </div>
+                    <h4 class="txt-m txt-bold mb6">
+                      Chose a maximum duration:
+                    </h4>
+                    <div class="mb12 mr12 toggle-group align-center">
+                      <label class="toggle-container">
+                        <input
+                          name="duration"
+                          type="radio"
+                          value="15"
+                          checked
+                        />
+                        <div class="toggle toggle--active-null toggle--null">
+                          15 min
+                        </div>
+                      </label>
+                      <label class="toggle-container">
+                        <input name="duration" type="radio" value="30" />
+                        <div class="toggle toggle--active-null toggle--null">
+                          30 min
+                        </div>
+                      </label>
+                      <label class="toggle-container">
+                        <input name="duration" type="radio" value="45" />
+                        <div class="toggle toggle--active-null toggle--null">
+                          45 min
+                        </div>
+                      </label>
+                      <label class="toggle-container">
+                        <input name="duration" type="radio" value="60" />
+                        <div class="toggle toggle--active-null toggle--null">
+                          60 min
+                        </div>
+                      </label>
+                    </div>
+                  </form>
+                </b-card>
+              </b-collapse>
+            </b-col>
+
+            <b-col class="pt-3" sm="2">
+              <b-button v-b-toggle.collapse-1 variant="info" size="sm">
+                <span class="when-opened">Close</span>
+                <span class="when-closed">Open</span> Menu
+              </b-button>
+            </b-col>
+          </b-row>
+        </b-container>
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss">
+.collapsed > .when-opened,
+:not(.collapsed) > .when-closed {
+  display: none;
+}
+
+.loader {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+
+.ui {
+  z-index: 5;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 200px;
+}
+
+.ui-widget {
+  width: 100%;
+}
+
+.ui-content {
+  background-color: #fff;
+  width: 100%;
+  align-self: right;
+}
+
 .marker-container {
   cursor: pointer;
   width: 80px;
@@ -113,11 +253,6 @@
   display: block;
   cursor: pointer;
 }
-.map {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-}
 .mapboxgl-popup {
   max-width: 200px;
   min-width: 150px;
@@ -157,7 +292,8 @@ export default {
       allPoints: [],
       clusteredPoints: [],
       userAddedPoints: [],
-      flying: false
+      flying: false,
+      loading: true
     };
   },
   mounted() {
@@ -208,6 +344,19 @@ export default {
         // this.removeInteractive();
         this.addIsoUI();
         this.addIsoLayer();
+      });
+      this.map.on("style.load", () => {
+        let self = this;
+        const waiting = () => {
+          if (!self.map.isStyleLoaded()) {
+            setTimeout(waiting, 200);
+          } else {
+            //loadMyLayers();
+            self.loading = false;
+            console.log(self.loading);
+          }
+        };
+        waiting();
       });
       // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
       this.map.on("click", function(e) {
@@ -281,7 +430,7 @@ export default {
           self.minutes = e.target.value;
         }
         if (self.selectedName != "") {
-          console.log("get iso")
+          console.log("get iso");
           self.getIso();
         }
       });
