@@ -1,5 +1,7 @@
 # weather
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/e4fa8399-b7e7-4cd5-b898-fd82dd1b34a2/deploy-status)](https://app.netlify.com/sites/greenergrass/deploys)
+
 > Weather app
 
 Uses the MET API to get weather data from relevant points: https://api.met.no/weatherapi/locationforecast/1.9/documentation
@@ -62,21 +64,31 @@ https://api.sehavniva.no/tideapi.php?lat=68.79889&lon=16.53139&fromtime=2019-12-
 
 http://api.sehavniva.no/tideapi.php?lat=68.79889&lon=16.53139&fromtime=2019-12-28T00%3A00&totime=2020-01-29T00%3A00&datatype=tab&refcode=cd&place=&file=&lang=nb&interval=60&dst=0&tzone=0&tide_request=locationdata
 
-## Build Setup
 
-``` bash
-# install dependencies
-$ npm run install
-
-# serve with hot reload at localhost:3000
-$ npm run dev
-
-# build for production and launch server
-$ npm run build
-$ npm run start
-
-# generate static project
-$ npm run generate
+## Project setup
+```
+npm install
 ```
 
-For detailed explanation on how things work, check out [Nuxt.js docs](https://nuxtjs.org).
+### Compiles and hot-reloads for development
+```
+npm run serve
+```
+
+### Compiles and minifies for production
+```
+npm run build
+```
+
+### Run your tests
+```
+npm run test
+```
+
+### Lints and fixes files
+```
+npm run lint
+```
+
+### Customize configuration
+See [Configuration Reference](https://cli.vuejs.org/config/).
