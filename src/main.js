@@ -4,7 +4,13 @@ import router from './router'
 import store from './store'
 import './registerServiceWorker'
 
-Vue.config.productionTip = false
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { faWalking, faCar, faBiking, faUserSecret } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+
+library.add(faWalking, faCar, faBiking, faUserSecret)
+
+Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 import BootstrapVue from "bootstrap-vue";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -15,6 +21,8 @@ Vue.use(BootstrapVue);
 /* vendor stuff */
 import "../node_modules/mapbox-gl/dist/mapbox-gl.css";
 import "../node_modules/@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
+
+Vue.config.productionTip = false
 
 new Vue({
   router,

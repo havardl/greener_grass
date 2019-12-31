@@ -72,12 +72,12 @@
             </b-collapse> -->
 
                   <form id="params">
-                    <h4 class="txt-m txt-bold mb6">Chose a travel mode:</h4>
+                    <h4 class="txt-m txt-bold mb6">Chose travel mode:</h4>
                     <div class="mb12 mr12 toggle-group align-center">
                       <label class="toggle-container">
                         <input name="profile" type="radio" value="walking" />
                         <div class="toggle toggle--active-null toggle--null">
-                          Walking
+                          <font-awesome-icon :icon="['fas', 'walking']" />
                         </div>
                       </label>
                       <label class="toggle-container">
@@ -88,18 +88,18 @@
                           checked
                         />
                         <div class="toggle toggle--active-null toggle--null">
-                          Cycling
+                          <font-awesome-icon :icon="['fas', 'biking']" />
                         </div>
                       </label>
                       <label class="toggle-container">
                         <input name="profile" type="radio" value="driving" />
                         <div class="toggle toggle--active-null toggle--null">
-                          Driving
+                          <font-awesome-icon :icon="['fas', 'car']" />
                         </div>
                       </label>
                     </div>
                     <h4 class="txt-m txt-bold mb6">
-                      Chose a maximum duration:
+                      Chose maximum duration:
                     </h4>
                     <div class="mb12 mr12 toggle-group align-center">
                       <label class="toggle-container">
