@@ -528,9 +528,7 @@ export default {
                 " og " +
                 self.data.precipitation.maxvalue +
                 "</p>" +
-                "<img src=" +
-                self.getMetWeatherIcon(self.data.symbol.number) +
-                " />"
+                "<img src=" + self.getLocalWeatherIcon(self.data.symbol.number) + " />"
             )
         )
         .addTo(self.map);
@@ -548,6 +546,19 @@ export default {
         url = url + content_type_png;
       }
       return url;
+    },
+    getLocalWeatherIcon(symbol_id) {
+      symbol_id = parseInt(symbol_id)
+      console.log(symbol_id)
+      let basic = [4,9,10,11,12,13,14,15,22,23,30,31,32,33,34,46,47,48,49,50];
+      let url = "";
+      if(basic.includes(symbol_id)) {
+        url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
+      } else {
+        url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
+        url = url + "d"
+      }
+      return "img/svg/" + url + ".svg";
     },
     getWeather: function(place) {
       this.selectedCoordinates = place.result.center;
@@ -779,7 +790,7 @@ export default {
             self.allPoints.push(turf.point(marker.geometry.coordinates));
           });
           self.map.fitBounds(bounds, {
-            padding: { top: 25, bottom: 25, left: 200, right: 25 }
+            padding: { top: 5, bottom: 5, left: 5, right: 5 }
           });
 
           // Create clusters from the grid points
@@ -855,7 +866,7 @@ export default {
 
       let marker_symbol = document.createElement("div");
       marker_symbol.className = "marker-symbol";
-      let symbol = self.getMetWeatherIcon(data.symbol.number);
+      let symbol = self.getLocalWeatherIcon(data.symbol.number);
       marker_symbol.style.backgroundImage = "url(" + symbol + ")";
       marker_symbol.dataset.lng = lng;
       marker_symbol.dataset.lat = lat;
