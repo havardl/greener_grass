@@ -12,7 +12,7 @@
         <div id="geocoder"></div>
       </div>
 
-      <div class="menu-item mt-2" style="z-index:1;">
+      <div class="menu-item mt-2" @mouseover="[showTime = false, showTravel = true]">
         <div class="menu-icon" @click="showTravel = !showTravel">
           <font-awesome-icon
             :icon="['fas', currentProfile]"
@@ -22,7 +22,7 @@
         </div>
         <transition name="slide">
           <div class="menu-content" v-if="showTravel">
-            <b-button-group  size="sm" style="padding-top:2px;">
+            <b-button-group size="sm" style="padding-top:2px;">
               <b-button variant="light">
                 <font-awesome-icon
                   :icon="['fas', 'walking']"
@@ -51,7 +51,10 @@
         </transition>
       </div>
 
-      <div class="menu-item mt-2">
+      <div
+        class="menu-item mt-2"
+        @mouseover="[showTime=true, showTravel = false]"
+      >
         <div class="menu-icon" @click="showTime = !showTime">
           <font-awesome-icon
             :icon="['fas', 'clock']"
@@ -79,8 +82,9 @@
 
 <style lang="scss">
 #geocoder,
-.suggestions-wrapper, .mapboxgl-ctrl-geocoder {
-  z-index: 5!important;
+.suggestions-wrapper,
+.mapboxgl-ctrl-geocoder {
+  z-index: 5 !important;
 }
 .menu-wrapper {
   // pointer-events: none;
@@ -95,7 +99,7 @@
   font-size: 15px;
   line-height: 20px;
   max-width: 360px;
-  z-index:1;
+  z-index: 1;
 }
 .menu-icon {
   position: fixed;
@@ -134,8 +138,8 @@
   margin-top: 5px !important;
 }
 .ui-button {
-  background-color: #fff!important;
-  border: 0px solid #fff!important;
+  background-color: #fff !important;
+  border: 0px solid #fff !important;
 }
 
 /* Small devices (landscape phones, 576px and up) */
@@ -350,7 +354,6 @@ export default {
     window.mapboxgl = require("mapbox-gl");
     window.MapboxGeocoder = require("@mapbox/mapbox-gl-geocoder");
     this.createMap();
-    // document.querySelector('.mapboxgl-ctrl-geocoder input').focus()
   },
   computed: {
     currentProfile() {
@@ -370,16 +373,14 @@ export default {
     },
     profile() {
       if (this.selectedName != "") {
-        console.log("Get iso after profile");
         this.getIso();
       }
     },
     minutes() {
       if (this.selectedName != "") {
-        console.log("Get iso after time");
         this.getIso();
       }
-    }
+    },
   },
   methods: {
     createMap() {
@@ -419,8 +420,6 @@ export default {
       document
         .getElementById("geocoder")
         .appendChild(this.geocoder.onAdd(this.map));
-
-      //document.querySelector(".mapboxgl-ctrl-geocoder--input").addEventListener("focus", this.hideUI());
 
       this.map.on("load", () => {
         //this.addIsoUI();
@@ -494,6 +493,11 @@ export default {
       });
       this.map.on("moveend", function() {
         console.log("Stopped moving");
+      });
+      this.map.on("mousemove", function() {
+        // Because of the UI, we need to do this here:
+        self.showTime = false;
+        self.showTravel = false;
       });
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
@@ -1173,9 +1177,6 @@ export default {
             self.getMetWeatherForecast(self.selectedCoordinates);
           });
       });
-    },
-    hideUI(event) {
-      console.log("Should hide", event)
     }
   },
   beforeMount() {

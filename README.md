@@ -45,7 +45,6 @@ UI/UX:
 - Hide weather icons on zoom out [might have to switch to marker layer, to be able to do this.]
 - Add loading logic when quering data from APIs
 
-
 ## Fixed:
 - Zoom the map to fit the isochrone shape (zoom in/out after the bbox of the shape)
 - Isochrone: color the shape in levels? [found solution - need to redo it]
