@@ -6,54 +6,8 @@
         <p>loading</p>
       </div>
     </div>
-    <!-- <div
-      class="absolute fl my24 mx24 py24 px24 bg-gray-faint round"
-      style="z-index:999"
-    >
-      <div>
-        <button v-on:click="removeAllMarkersFromMap">
-          Remove markers
-        </button>
-      </div>
-      <div id="geocoder"></div>
-      <form id="params">
-        <h4 class="txt-m txt-bold mb6">Chose a travel mode:</h4>
-        <div class="mb12 mr12 toggle-group align-center">
-          <label class="toggle-container">
-            <input name="profile" type="radio" value="walking" />
-            <div class="toggle toggle--active-null toggle--null">Walking</div>
-          </label>
-          <label class="toggle-container">
-            <input name="profile" type="radio" value="cycling" checked />
-            <div class="toggle toggle--active-null toggle--null">Cycling</div>
-          </label>
-          <label class="toggle-container">
-            <input name="profile" type="radio" value="driving" />
-            <div class="toggle toggle--active-null toggle--null">Driving</div>
-          </label>
-        </div>
-        <h4 class="txt-m txt-bold mb6">Chose a maximum duration:</h4>
-        <div class="mb12 mr12 toggle-group align-center">
-          <label class="toggle-container">
-            <input name="duration" type="radio" value="15" checked />
-            <div class="toggle toggle--active-null toggle--null">15 min</div>
-          </label>
-          <label class="toggle-container">
-            <input name="duration" type="radio" value="30" />
-            <div class="toggle toggle--active-null toggle--null">30 min</div>
-          </label>
-          <label class="toggle-container">
-            <input name="duration" type="radio" value="45" />
-            <div class="toggle toggle--active-null toggle--null">45 min</div>
-          </label>
-          <label class="toggle-container">
-            <input name="duration" type="radio" value="60" />
-            <div class="toggle toggle--active-null toggle--null">60 min</div>
-          </label>
-        </div>
-      </form>
-    </div> -->
-    <div class="ui">
+
+    <!-- <div class="ui">
       <div class="ui-widget">
         <b-container fluid>
           <b-row>
@@ -66,11 +20,6 @@
                     </button>
                   </div>
                   <div id="geocoder"></div>
-                  <!-- <b-button v-b-toggle.collapse-1-inner size="sm">Toggle Inner Collapse</b-button>
-            <b-collapse id="collapse-1-inner" class="mt-2">
-              <b-card>Hello!</b-card>
-            </b-collapse> -->
-
                   <form id="params">
                     <h4 class="txt-m txt-bold mb6">Chose travel mode:</h4>
                     <div class="mb12 mr12 toggle-group align-center">
@@ -146,11 +95,113 @@
           </b-row>
         </b-container>
       </div>
+    </div> -->
+
+    <div class="menu-wrapper mt-2 ml-2 mr-2">
+      <div class="menu-item">
+        <div id="geocoder" style="width:90%;"></div>
+      </div>
+
+      <div class="menu-item mt-2">
+        <div class="menu-icon" @click="show = !show">
+          <font-awesome-icon
+            :icon="['fas', 'biking']"
+            size="2x"
+            :style="{ color: '#757575' }"
+          />
+        </div>
+        <transition name="slide">
+          <div class="menu-content" v-if="show">
+            Content
+          </div>
+        </transition>
+      </div>
+
+      <div class="menu-item mt-2">
+        <div class="menu-icon" @click="show = !show">
+          <font-awesome-icon
+            :icon="['fas', 'clock']"
+            size="2x"
+            :style="{ color: '#757575' }"
+          />
+        </div>
+        <transition name="slide">
+          <div class="menu-content" v-if="show">
+            Content
+          </div>
+        </transition>
+      </div>
     </div>
   </div>
 </template>
 
 <style lang="scss">
+.menu-wrapper {
+  // pointer-events: none;
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50px;
+}
+
+.menu-item {
+  height: 50px;
+  max-height: 50px;
+  width: 100%;
+}
+.menu-icon {
+  position: fixed;
+  z-index: 20;
+  background-color: #fff;
+  height: 50px;
+  width: 50px;
+  min-width: 50px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+}
+.menu-icon > svg {
+  // cursor: pointer;
+  position: absolute;
+  top: 13px;
+  left: 12px;
+}
+.menu-content {
+  width: 90%;
+  height: 100%;
+  background-color: #fff;
+  float: left;
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.slide-enter-active {
+  animation: slide-in 0.25s;
+}
+.slide-leave-active {
+  animation: slide-in 0.25s reverse;
+}
+@keyframes slide-in {
+  0% {
+    -webkit-transform: translateX(-80%);
+  }
+  100% {
+    -webkit-transform: translateX(0%);
+  }
+}
+
+@-webkit-keyframes slide-in {
+  0% {
+    transform: translateX(-80%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
 .collapsed > .when-opened,
 :not(.collapsed) > .when-closed {
   display: none;
@@ -293,7 +344,8 @@ export default {
       clusteredPoints: [],
       userAddedPoints: [],
       flying: false,
-      loading: true
+      loading: true,
+      show: false
     };
   },
   mounted() {
@@ -341,7 +393,7 @@ export default {
         .appendChild(this.geocoder.onAdd(this.map));
 
       this.map.on("load", () => {
-        this.addIsoUI();
+        //this.addIsoUI();
         this.addIsoLayer();
       });
       this.map.on("style.load", () => {
@@ -503,7 +555,7 @@ export default {
       this.map.keyboard.enable();
       this.map.doubleClickZoom.enable();
       this.map.touchZoomRotate.enable();
-    },    
+    },
     addSelectedLocation() {
       let self = this;
       var el = document.createElement("div");
@@ -528,7 +580,9 @@ export default {
                 " og " +
                 self.data.precipitation.maxvalue +
                 "</p>" +
-                "<img src=" + self.getLocalWeatherIcon(self.data.symbol.number) + " />"
+                "<img src=" +
+                self.getLocalWeatherIcon(self.data.symbol.number) +
+                " />"
             )
         )
         .addTo(self.map);
@@ -548,15 +602,36 @@ export default {
       return url;
     },
     getLocalWeatherIcon(symbol_id) {
-      symbol_id = parseInt(symbol_id)
-      console.log(symbol_id)
-      let basic = [4,9,10,11,12,13,14,15,22,23,30,31,32,33,34,46,47,48,49,50];
+      symbol_id = parseInt(symbol_id);
+      console.log(symbol_id);
+      let basic = [
+        4,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        22,
+        23,
+        30,
+        31,
+        32,
+        33,
+        34,
+        46,
+        47,
+        48,
+        49,
+        50
+      ];
       let url = "";
-      if(basic.includes(symbol_id)) {
+      if (basic.includes(symbol_id)) {
         url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
       } else {
         url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
-        url = url + "d"
+        url = url + "d";
       }
       return "img/svg/" + url + ".svg";
     },
@@ -1045,11 +1120,25 @@ export default {
       }
     },
     stillLoading() {
-      this.removeInteractive()
+      this.removeInteractive();
     },
     finishedLoading() {
-      this.addInteractive()
+      this.addInteractive();
+    },
+    geolocation() {
+      // ask the user for a location
+      let self = this;
+      // navigator.geolocation.getCurrentPosition(this.buildUrl, this.geoError);
+      let options = {enableHighAccuracy:true}
+      this.$getLocation(options).then(coordinates => {
+        console.log(coordinates);
+        self.selectedCoordinates = [coordinates.lng, coordinates.lat]
+        self.getMetWeatherForecast(self.selectedCoordinates);
+      });
     }
+  },
+  beforeMount() {
+    this.geolocation();
   }
 };
 </script>
