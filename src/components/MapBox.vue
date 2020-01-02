@@ -161,7 +161,8 @@
 </template>
 
 <style lang="scss">
-#geocoder, .suggestions-wrapper {
+#geocoder,
+.suggestions-wrapper {
   z-index: 500;
 }
 .menu-wrapper {
@@ -435,13 +436,13 @@ export default {
     },
     profile() {
       if (this.selectedName != "") {
-        console.log("Get iso after profile")
+        console.log("Get iso after profile");
         this.getIso();
       }
     },
     minutes() {
       if (this.selectedName != "") {
-        console.log("Get iso after time")
+        console.log("Get iso after time");
         this.getIso();
       }
     }
@@ -1210,15 +1211,17 @@ export default {
       this.addInteractive();
     },
     geolocation() {
-      console.log("Run user geo location")
+      console.log("Run user geo location");
       // ask the user for a location
       let self = this;
       // navigator.geolocation.getCurrentPosition(this.buildUrl, this.geoError);
       let options = { enableHighAccuracy: false };
       this.$getLocation(options).then(coordinates => {
-        console.log(coordinates);
         self.selectedCoordinates = [coordinates.lng, coordinates.lat];
-        self.getMetWeatherForecast(self.selectedCoordinates);
+        let place = self.getNamedPlace(self.selectedCoordinates).then(function(res) {
+          self.selectedName = res.data.features[0].text;
+          self.getMetWeatherForecast(self.selectedCoordinates);
+        });
       });
     }
   },
