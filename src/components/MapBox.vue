@@ -98,36 +98,61 @@
     </div> -->
 
     <div class="menu-wrapper mt-2 ml-2 mr-2">
-      <div class="menu-item">
+      <div class="menu-item" style="z-index:15;">
         <div id="geocoder" style="width:90%;"></div>
       </div>
 
-      <div class="menu-item mt-2">
-        <div class="menu-icon" @click="show = !show">
+      <div class="menu-item mt-2" style="z-index:1;">
+        <div class="menu-icon" @click="showTravel = !showTravel">
           <font-awesome-icon
             :icon="['fas', 'biking']"
-            size="2x"
+            size="lg"
             :style="{ color: '#757575' }"
           />
         </div>
         <transition name="slide">
-          <div class="menu-content" v-if="show">
-            Content
+          <div class="menu-content" v-if="showTravel">
+            <font-awesome-icon
+              :icon="['fas', 'walking']"
+              size="lg"
+              @click="profile = 'walking'"
+              :style="{ color: '#757575' }"
+            />
+            <font-awesome-icon
+              :icon="['fas', 'biking']"
+              size="lg"
+              @click="profile = 'cycling'"
+              :style="{ color: '#757575' }"
+            />
+            <font-awesome-icon
+              :icon="['fas', 'car']"
+              size="lg"
+              @click="profile = 'driving'"
+              :style="{ color: '#757575' }"
+            />
           </div>
         </transition>
       </div>
 
       <div class="menu-item mt-2">
-        <div class="menu-icon" @click="show = !show">
+        <div class="menu-icon" @click="showTime = !showTime">
           <font-awesome-icon
             :icon="['fas', 'clock']"
-            size="2x"
+            size="lg"
             :style="{ color: '#757575' }"
           />
         </div>
         <transition name="slide">
-          <div class="menu-content" v-if="show">
-            Content
+          <div class="menu-content" v-if="showTime">
+            <vue-slider
+              class="ui-slider"
+              v-model="minutes"
+              :data="uiTimeInterval"
+              :marks="true"
+              :adsorb="true"
+              :contained="true"
+              :drag-on-click="true"
+            ></vue-slider>
           </div>
         </transition>
       </div>
@@ -136,48 +161,89 @@
 </template>
 
 <style lang="scss">
+#geocoder, .suggestions-wrapper {
+  z-index: 500;
+}
 .menu-wrapper {
   // pointer-events: none;
   position: absolute;
-  z-index: 5;
+  z-index: 1;
   top: 0;
   left: 0;
   width: 100%;
-  height: 50px;
 }
-
 .menu-item {
   height: 50px;
-  max-height: 50px;
   width: 100%;
 }
 .menu-icon {
   position: fixed;
-  z-index: 20;
+  z-index: 5;
   background-color: #fff;
   height: 50px;
   width: 50px;
-  min-width: 50px;
   text-align: center;
   cursor: pointer;
   border-radius: 4px;
   box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+  transition: width 0.25s, min-width 0.25s;
 }
 .menu-icon > svg {
-  // cursor: pointer;
   position: absolute;
   top: 13px;
   left: 12px;
 }
 .menu-content {
   width: 90%;
+  padding-left: 55px;
   height: 100%;
   background-color: #fff;
   float: left;
   box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
 }
+.ui-slider {
+  min-width: 200px;
+  width: 50% !important;
+  max-width: 50% !important;
+  margin-top: 10px;
+}
+.vue-slider-mark-label {
+  font-size: 12px !important;
+  margin-top: 5px !important;
+}
 
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) {
+}
+@media (min-width: 640px) {
+  .menu-item {
+    height: 36px;
+  }
+  .menu-icon {
+    height: 36px;
+    width: 36px;
+  }
+  .menu-icon > svg {
+    top: 8px;
+    left: 7px;
+  }
+  .menu-content {
+    padding-left: 40px;
+  }
+  .ui-slider {
+    margin-top: 0px;
+  }
+}
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+}
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+}
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+}
 .slide-enter-active {
   animation: slide-in 0.25s;
 }
@@ -318,12 +384,17 @@
 <script>
 import * as turf from "@turf/turf";
 import axios from "axios";
+import VueSlider from "vue-slider-component";
+import "vue-slider-component/theme/default.css";
 
 export default {
   name: "MapBox",
   props: {
     center: Array,
     marker: Object
+  },
+  components: {
+    VueSlider
   },
   data: function() {
     return {
@@ -337,15 +408,17 @@ export default {
       selectedName: "",
       selectedDistance: 0,
       selectedDuration: 0,
-      profile: "cycling",
-      minutes: 15,
       allMarkers: [],
       allPoints: [],
       clusteredPoints: [],
       userAddedPoints: [],
       flying: false,
       loading: true,
-      show: false
+      showTravel: false,
+      showTime: false,
+      uiTimeInterval: [15, 30, 45, 60],
+      profile: "cycling",
+      minutes: 15
     };
   },
   mounted() {
@@ -359,6 +432,18 @@ export default {
     data() {
       this.getIso();
       this.addSelectedLocation();
+    },
+    profile() {
+      if (this.selectedName != "") {
+        console.log("Get iso after profile")
+        this.getIso();
+      }
+    },
+    minutes() {
+      if (this.selectedName != "") {
+        console.log("Get iso after time")
+        this.getIso();
+      }
     }
   },
   methods: {
@@ -603,7 +688,6 @@ export default {
     },
     getLocalWeatherIcon(symbol_id) {
       symbol_id = parseInt(symbol_id);
-      console.log(symbol_id);
       let basic = [
         4,
         9,
@@ -1126,13 +1210,14 @@ export default {
       this.addInteractive();
     },
     geolocation() {
+      console.log("Run user geo location")
       // ask the user for a location
       let self = this;
       // navigator.geolocation.getCurrentPosition(this.buildUrl, this.geoError);
-      let options = {enableHighAccuracy:true}
+      let options = { enableHighAccuracy: false };
       this.$getLocation(options).then(coordinates => {
         console.log(coordinates);
-        self.selectedCoordinates = [coordinates.lng, coordinates.lat]
+        self.selectedCoordinates = [coordinates.lng, coordinates.lat];
         self.getMetWeatherForecast(self.selectedCoordinates);
       });
     }
