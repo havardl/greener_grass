@@ -7,129 +7,46 @@
       </div>
     </div>
 
-    <!-- <div class="ui">
-      <div class="ui-widget">
-        <b-container fluid>
-          <b-row>
-            <b-col sm="10">
-              <b-collapse id="collapse-1" class="mt-2">
-                <b-card class="ui-content">
-                  <div>
-                    <button v-on:click="removeAllMarkersFromMap">
-                      Remove markers
-                    </button>
-                  </div>
-                  <div id="geocoder"></div>
-                  <form id="params">
-                    <h4 class="txt-m txt-bold mb6">Chose travel mode:</h4>
-                    <div class="mb12 mr12 toggle-group align-center">
-                      <label class="toggle-container">
-                        <input name="profile" type="radio" value="walking" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          <font-awesome-icon :icon="['fas', 'walking']" />
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input
-                          name="profile"
-                          type="radio"
-                          value="cycling"
-                          checked
-                        />
-                        <div class="toggle toggle--active-null toggle--null">
-                          <font-awesome-icon :icon="['fas', 'biking']" />
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input name="profile" type="radio" value="driving" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          <font-awesome-icon :icon="['fas', 'car']" />
-                        </div>
-                      </label>
-                    </div>
-                    <h4 class="txt-m txt-bold mb6">
-                      Chose maximum duration:
-                    </h4>
-                    <div class="mb12 mr12 toggle-group align-center">
-                      <label class="toggle-container">
-                        <input
-                          name="duration"
-                          type="radio"
-                          value="15"
-                          checked
-                        />
-                        <div class="toggle toggle--active-null toggle--null">
-                          15 min
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input name="duration" type="radio" value="30" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          30 min
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input name="duration" type="radio" value="45" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          45 min
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input name="duration" type="radio" value="60" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          60 min
-                        </div>
-                      </label>
-                    </div>
-                  </form>
-                </b-card>
-              </b-collapse>
-            </b-col>
-
-            <b-col class="pt-3" sm="2">
-              <b-button v-b-toggle.collapse-1 variant="info" size="sm">
-                <span class="when-opened">Close</span>
-                <span class="when-closed">Open</span> Menu
-              </b-button>
-            </b-col>
-          </b-row>
-        </b-container>
-      </div>
-    </div> -->
-
     <div class="menu-wrapper mt-2 ml-2 mr-2">
       <div class="menu-item" style="z-index:15;">
-        <div id="geocoder" style="width:90%;"></div>
+        <div id="geocoder"></div>
       </div>
 
       <div class="menu-item mt-2" style="z-index:1;">
         <div class="menu-icon" @click="showTravel = !showTravel">
           <font-awesome-icon
-            :icon="['fas', 'biking']"
+            :icon="['fas', currentProfile]"
             size="lg"
             :style="{ color: '#757575' }"
           />
         </div>
         <transition name="slide">
           <div class="menu-content" v-if="showTravel">
-            <font-awesome-icon
-              :icon="['fas', 'walking']"
-              size="lg"
-              @click="profile = 'walking'"
-              :style="{ color: '#757575' }"
-            />
-            <font-awesome-icon
-              :icon="['fas', 'biking']"
-              size="lg"
-              @click="profile = 'cycling'"
-              :style="{ color: '#757575' }"
-            />
-            <font-awesome-icon
-              :icon="['fas', 'car']"
-              size="lg"
-              @click="profile = 'driving'"
-              :style="{ color: '#757575' }"
-            />
+            <b-button-group  size="sm" style="padding-top:2px;">
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'walking']"
+                  size="lg"
+                  @click="profile = 'walking'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'biking']"
+                  size="lg"
+                  @click="profile = 'cycling'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'car']"
+                  size="lg"
+                  @click="profile = 'driving'"
+                />
+              </b-button>
+            </b-button-group>
           </div>
         </transition>
       </div>
@@ -162,8 +79,8 @@
 
 <style lang="scss">
 #geocoder,
-.suggestions-wrapper {
-  z-index: 500;
+.suggestions-wrapper, .mapboxgl-ctrl-geocoder {
+  z-index: 5!important;
 }
 .menu-wrapper {
   // pointer-events: none;
@@ -171,15 +88,18 @@
   z-index: 1;
   top: 0;
   left: 0;
-  width: 100%;
 }
 .menu-item {
   height: 50px;
-  width: 100%;
+  min-width: 200px;
+  font-size: 15px;
+  line-height: 20px;
+  max-width: 360px;
+  z-index:1;
 }
 .menu-icon {
   position: fixed;
-  z-index: 5;
+  z-index: 1;
   background-color: #fff;
   height: 50px;
   width: 50px;
@@ -195,7 +115,7 @@
   left: 12px;
 }
 .menu-content {
-  width: 90%;
+  width: 100%;
   padding-left: 55px;
   height: 100%;
   background-color: #fff;
@@ -212,6 +132,10 @@
 .vue-slider-mark-label {
   font-size: 12px !important;
   margin-top: 5px !important;
+}
+.ui-button {
+  background-color: #fff!important;
+  border: 0px solid #fff!important;
 }
 
 /* Small devices (landscape phones, 576px and up) */
@@ -428,7 +352,17 @@ export default {
     this.createMap();
     // document.querySelector('.mapboxgl-ctrl-geocoder input').focus()
   },
-  computed: {},
+  computed: {
+    currentProfile() {
+      if (this.profile === "walking") {
+        return "walking";
+      } else if (this.profile === "cycling") {
+        return "biking";
+      } else if (this.profile === "driving") {
+        return "car";
+      }
+    }
+  },
   watch: {
     data() {
       this.getIso();
@@ -471,12 +405,22 @@ export default {
         mapboxgl: window.mapboxgl,
         placeholder: "Søk etter sted",
         collapsed: true,
-        countries: "NO,DK,SE"
+        countries: "NO,DK,SE",
+        render: function(item) {
+          // extract the item's maki icon or use a default
+          return (
+            "<div class='geocoder-dropdown-item' style='z-index:20;'><span class='geocoder-dropdown-text'>" +
+            item.text +
+            "</span></div>"
+          );
+        }
       });
       //this.map.addControl(this.geocoder);
       document
         .getElementById("geocoder")
         .appendChild(this.geocoder.onAdd(this.map));
+
+      //document.querySelector(".mapboxgl-ctrl-geocoder--input").addEventListener("focus", this.hideUI());
 
       this.map.on("load", () => {
         //this.addIsoUI();
@@ -555,7 +499,11 @@ export default {
         // Fired when the geocoder returns a selected result
         // https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#on
         self.getWeather(result);
+        // document.querySelectorAll(".menu-icon").forEach(el => el.style.position = "fixed");
       });
+      // this.geocoder.on("loading", function() {
+      //   document.querySelectorAll(".menu-icon").forEach(el => el.style.position = "relative");
+      // })
     },
     addIsoUI() {
       let self = this;
@@ -1218,11 +1166,16 @@ export default {
       let options = { enableHighAccuracy: false };
       this.$getLocation(options).then(coordinates => {
         self.selectedCoordinates = [coordinates.lng, coordinates.lat];
-        let place = self.getNamedPlace(self.selectedCoordinates).then(function(res) {
-          self.selectedName = res.data.features[0].text;
-          self.getMetWeatherForecast(self.selectedCoordinates);
-        });
+        let place = self
+          .getNamedPlace(self.selectedCoordinates)
+          .then(function(res) {
+            self.selectedName = res.data.features[0].text;
+            self.getMetWeatherForecast(self.selectedCoordinates);
+          });
       });
+    },
+    hideUI(event) {
+      console.log("Should hide", event)
     }
   },
   beforeMount() {
