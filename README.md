@@ -35,12 +35,12 @@ https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Global_bounding_box
 
 ## TODO:
 Data:
-- Implement Entur.no API to get oublic transporation routes in Norway.
-- Add ebb and tide information
+- Implement Entur.no API to get public transportation routes in Norway.
+- Add ebb and tide information?
 
 UI/UX:
 - Remove layers, markers etc. when new search (place, profile of transport and time) is run
-- Show information somewhere static?
+- Show information somewhere static
 - Hide weather icons on zoom out [might have to switch to marker layer, to be able to do this.]
 - Add loading logic when quering data from APIs
 

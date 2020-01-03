@@ -29,7 +29,7 @@ export default {
   },
   data() {
     return {
-      center: [10.74761, 59.9147]
+      center: [10.39506,63.43049]
     };
   }
 };

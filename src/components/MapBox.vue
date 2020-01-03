@@ -14,7 +14,9 @@
 
       <div
         class="menu-item mt-2"
-        @mouseover="[(showTime = false), (showDestination = true), (showTravel=false)]"
+        @mouseover="
+          [(showTime = false), (showDestination = true), (showTravel = false)]
+        "
       >
         <div class="menu-icon" @click="showDestination = !showDestination">
           <font-awesome-icon
@@ -48,7 +50,9 @@
 
       <div
         class="menu-item mt-2"
-        @mouseover="[(showTime = false), (showTravel = true), (showDestination=false)]"
+        @mouseover="
+          [(showTime = false), (showTravel = true), (showDestination = false)]
+        "
       >
         <div class="menu-icon" @click="showTravel = !showTravel">
           <font-awesome-icon
@@ -90,7 +94,9 @@
 
       <div
         class="menu-item mt-2"
-        @mouseover="[(showTime = true), (showTravel = false), (showDestination=false)]"
+        @mouseover="
+          [(showTime = true), (showTravel = false), (showDestination = false)]
+        "
       >
         <div class="menu-icon" @click="showTime = !showTime">
           <font-awesome-icon
@@ -385,7 +391,11 @@ export default {
       uiTimeInterval: [15, 30, 45, 60],
       profile: "cycling",
       destination: "beach",
-      minutes: 15
+      minutes: 15,
+      isochroneCoordinates: [],
+      isochronePoly: null,
+      isochroneBbox: [],
+      isochroneBboxReversed: []      
     };
   },
   mounted() {
@@ -414,22 +424,42 @@ export default {
   },
   watch: {
     data() {
+      // When weather data is set (a bit messy and unintuitive)
       this.getIso();
       this.addSelectedLocation();
     },
     profile() {
+      // When travel mode is changed
       if (this.selectedName != "") {
         this.getIso();
       }
     },
     minutes() {
+      // When travel time is changed
       if (this.selectedName != "") {
         this.getIso();
       }
+    },
+    isochroneCoordinates() {
+      // When we have recieved a isochrone shape:
+      this.zoomToBounds();
     }
   },
   methods: {
+    zoomToBounds() {
+      // Zoom the map to the bounds of the isochrone shape:
+      let bounds = this.isochroneCoordinates.reduce(function(bounds, coord) {
+        return bounds.extend(coord);
+      }, new window.mapboxgl.LngLatBounds(this.isochroneCoordinates[0], this.isochroneCoordinates[0]));
+
+      this.map.fitBounds(bounds, {
+        padding: { top: 5, bottom: 5, left: 5, right: 5 },
+        maxZoom: 12,
+        linear: false
+      });
+    },
     runOverpassQuery(bbox) {
+      // Query the Overpass API within a specific bbox
       let poi_type = this.destination;
       let query = `
         [out:json][timeout:25];
@@ -460,7 +490,7 @@ export default {
         container: "map",
         style: "mapbox://styles/mapbox/light-v10",
         center: this.center,
-        zoom: 6,
+        zoom: 3.5,
         accessToken: this.token,
         attributionControl: false
       };
@@ -476,14 +506,14 @@ export default {
         placeholder: "Søk etter sted",
         collapsed: true,
         countries: "NO,DK,SE",
-        render: function(item) {
-          // extract the item's maki icon or use a default
-          return (
-            "<div class='geocoder-dropdown-item' style='z-index:20;'><span class='geocoder-dropdown-text'>" +
-            item.text +
-            "</span></div>"
-          );
-        }
+        // render: function(item) {
+        //   // extract the item's maki icon or use a default
+        //   return (
+        //     "<div class='geocoder-dropdown-item' style='z-index:20;'><span class='geocoder-dropdown-text'>" +
+        //     item.text +
+        //     "</span></div>"
+        //   );
+        // }
       });
       //this.map.addControl(this.geocoder);
       document
@@ -508,30 +538,9 @@ export default {
         };
         waiting();
       });
-      // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
       this.map.on("click", function(e) {
-        // var features = self.map.queryRenderedFeatures(e.point);
-
-        // // Limit the number of properties we're displaying for
-        // // legibility and performance
-        // var displayProperties = [
-        //   "type",
-        //   "properties",
-        //   "id",
-        //   "layer",
-        //   "source",
-        //   "sourceLayer",
-        //   "state"
-        // ];
-
-        // var displayFeatures = features.map(function(feat) {
-        //   var displayFeat = {};
-        //   displayProperties.forEach(function(prop) {
-        //     displayFeat[prop] = feat[prop];
-        //   });
-        //   return displayFeat;
-        // });
-        // console.log(displayFeatures)
+        // Add a weather forecast on the map when clicking. 
+        // TODO: Add UI to make this a feature which you have to turn on
 
         let clickedCoords = [e.lngLat.lng, e.lngLat.lat];
         let outsideBounds = true;
@@ -554,15 +563,26 @@ export default {
           self.getPointWeather(clickedCoords, true);
         }
       });
-      this.map.on("flystart", function() {
-        self.flying = true;
-      });
-      this.map.on("flyend", function() {
-        self.flying = false;
-      });
-      this.map.on("moveend", function() {
-        console.log("Stopped moving");
-      });
+      // this.map.on("flystart", function() {
+      //   self.flying = true;
+      //   self.loading = true;
+      //   self.stillLoading();
+      // });
+      // this.map.on("flyend", function() {
+      //   self.flying = false;
+      //   self.loading = false;
+      //   self.finishedLoading();
+      // });
+      // this.map.on("movestart", function() {
+      //   console.log("Started moving");
+      //   //self.loading = true;
+      //   self.stillLoading();        
+      // });      
+      // this.map.on("moveend", function() {
+      //   console.log("Stopped moving");
+      //   //self.loading = false;
+      //   self.finishedLoading();        
+      // });
       this.map.on("mousemove", function() {
         // Because of the UI, we need to do this here:
         self.showTime = false;
@@ -578,22 +598,6 @@ export default {
       // this.geocoder.on("loading", function() {
       //   document.querySelectorAll(".menu-icon").forEach(el => el.style.position = "relative");
       // })
-    },
-    addIsoUI() {
-      let self = this;
-      let params = document.getElementById("params");
-      params.addEventListener("change", function(e) {
-        //self.removeAllMarkersFromMap();
-        if (e.target.name === "profile") {
-          self.profile = e.target.value;
-        } else if (e.target.name === "duration") {
-          self.minutes = e.target.value;
-        }
-        if (self.selectedName != "") {
-          console.log("get iso");
-          self.getIso();
-        }
-      });
     },
     addIsoLayer() {
       // When the map loads, add the source and layer
@@ -619,28 +623,6 @@ export default {
         },
         "poi-label"
       );
-
-      this.map.addSource("iso_tess", {
-        type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features: []
-        }
-      });
-      this.map.addLayer(
-        {
-          id: "isoTessLayer",
-          type: "fill",
-          source: "iso_tess",
-          layout: {},
-          paint: {
-            // The fill color for the layer is set to a light purple
-            "fill-color": "#5a3fc0",
-            "fill-opacity": 0.3
-          }
-        },
-        "poi-label"
-      );
     },
     removeInteractive() {
       // set layer visibility
@@ -656,15 +638,17 @@ export default {
     addInteractive() {
       // set layer visibility
       // turn off interactivity
+      this.map.dragPan.enable();
       this.map.scrollZoom.enable();
       this.map.boxZoom.enable();
       this.map.dragRotate.enable();
-      this.map.dragPan.enable();
       this.map.keyboard.enable();
       this.map.doubleClickZoom.enable();
       this.map.touchZoomRotate.enable();
     },
     addSelectedLocation() {
+      // Add a marker for the user's location
+
       let self = this;
       var el = document.createElement("div");
       el.className = "selected-marker";
@@ -871,8 +855,9 @@ export default {
         return forecasts[0];
       }
     },
-    // Create a function that sets up the Isochrone API query then makes an Ajax call
     async getIso() {
+      // Get the isochrone polygon around a point
+      // Currently using the Mapbox API for this, but might change. 
       let self = this;
       let urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
       let lon = this.selectedCoordinates[0];
@@ -893,42 +878,32 @@ export default {
       // Various color for minutes:
       //"&contours_colors=6706ce,04e813,4286f4" +
 
-      //console.log(query);
       const res = await axios
         .get(query)
         .then(response => {
-          console.log(response);
-          // Add isochrones:
+          // Get the isochrone shape as polygon and add it to the map
           self.map.getSource("iso").setData(response.data);
-          let coordinates = response.data.features[0].geometry.coordinates[0];
+          self.isochroneCoordinates = response.data.features[0].geometry.coordinates[0];
+          self.isochronePoly = turf.polygon([self.isochroneCoordinates]);
 
-          // Polygon to linestring - use this for along side and calculations on the markers
-          let poly = turf.polygon([coordinates]);
-          let line = turf.polygonToLine(poly);
-          line = turf.lineString(line.geometry.coordinates);
+          // let line = turf.polygonToLine(poly);
+          // line = turf.lineString(line.geometry.coordinates);
 
-          // // Create tesselate within polygon
-          // let tess = turf.tesselate(poly);
-          // // Add tesselate:
-          // self.map.getSource("iso_tess").setData(tess);
-          // console.log(self.map.getSource("iso_tess"));
+          // // Add points along the edge of the shape
+          // let distance = 1;
+          // let length = turf.lineDistance(line, { units: "kilometers" });
+          // for (let i = 1; i <= length / distance; i++) {
+          //   let point = turf.along(line, i * distance, {
+          //     units: "kilometers"
+          //   });
+          //   self.allPoints.push(point);
+          // }
 
-          // Add points along the edge of the shape
-          let distance = 1;
-          let length = turf.lineDistance(line, { units: "kilometers" });
-          for (let i = 1; i <= length / distance; i++) {
-            let point = turf.along(line, i * distance, {
-              units: "kilometers"
-            });
-            //self.addMarkerToMap(point.geometry.coordinates);
-            self.allPoints.push(point);
-          }
-
-          let lons = coordinates.map(function(elt) {
+          let lons = self.isochroneCoordinates.map(function(elt) {
             return elt[0];
           });
 
-          let lats = coordinates.map(function(elt) {
+          let lats = self.isochroneCoordinates.map(function(elt) {
             return elt[1];
           });
 
@@ -936,77 +911,66 @@ export default {
           let lon_max = this.getMax(lons);
           let lat_min = this.getMin(lats);
           let lat_max = this.getMax(lats);
-          let extent = [lon_min, lat_min, lon_max, lat_max];
+          self.isochroneBbox = [lon_min, lat_min, lon_max, lat_max];
+          self.isochroneBboxReversed = [lat_min, lon_min, lat_max, lon_max];
 
-          // peak, beach
-          self
-            .runOverpassQuery([lat_min, lon_min, lat_max, lon_max])
-            .then(function(response) {
-              console.log(response);
-            });
+          // MOVE:
+          // // peak, beach
+          // self
+          //   .runOverpassQuery(extent_reveresed)
+          //   .then(function(response) {
+          //     console.log(response);
+          //   });
 
-          let bounds = coordinates.reduce(function(bounds, coord) {
-            return bounds.extend(coord);
-          }, new window.mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+          // ALL REDUNDANT: 
+          // let cellSide = 0.5;
+          // let options = { units: "kilometers" };
+          // let grid = turf.pointGrid(extent, cellSide, options);
 
-          let cellSide = 0.5;
-          let options = { units: "kilometers" };
-          let grid = turf.pointGrid(extent, cellSide, options);
+          // // Filter out points outside our polygon
+          // let scaledPoly = turf.transformScale(poly, 0.5);
+          // let grid_within = grid.features.filter(point =>
+          //   point
+          //     ? turf.booleanPointInPolygon(
+          //         turf.point(point.geometry.coordinates),
+          //         poly
+          //       ) &&
+          //       !turf.booleanPointInPolygon(
+          //         turf.point(point.geometry.coordinates),
+          //         scaledPoly
+          //       )
+          //     : false
+          // );
 
-          // // Check if the points are within the actual polygon:
-          // let pt = turf.point(this.selectedCoordinates);
-          // var poly = turf.polygon([coordinates]);
-          // let check = turf.booleanPointInPolygon(pt, poly);
+          // // Add markers to map
+          // grid_within.forEach(function(marker) {
+          //   //self.addMarkerToMap(marker.geometry.coordinates);
+          //   self.allPoints.push(turf.point(marker.geometry.coordinates));
+          // });
 
-          // Filter out points outside our polygon
-          let scaledPoly = turf.transformScale(poly, 0.5);
-          let grid_within = grid.features.filter(point =>
-            point
-              ? turf.booleanPointInPolygon(
-                  turf.point(point.geometry.coordinates),
-                  poly
-                ) &&
-                !turf.booleanPointInPolygon(
-                  turf.point(point.geometry.coordinates),
-                  scaledPoly
-                )
-              : false
-          );
-
-          // Add markers to map
-          grid_within.forEach(function(marker) {
-            //self.addMarkerToMap(marker.geometry.coordinates);
-            self.allPoints.push(turf.point(marker.geometry.coordinates));
-          });
-          self.map.fitBounds(bounds, {
-            padding: { top: 5, bottom: 5, left: 5, right: 5 }
-          });
-
-          // Create clusters from the grid points
-          var clustered = turf.clustersKmeans(
-            turf.featureCollection(self.allPoints),
-            { numberOfClusters: 20 }
-          );
-
-          // Iterate over each cluster
-          turf.clusterEach(clustered, "cluster", function(
-            cluster,
-            clusterValue,
-            currentIndex
-          ) {
-            let clusterCenter = turf.center(cluster);
-            if (
-              turf.booleanPointInPolygon(
-                turf.point(clusterCenter.geometry.coordinates),
-                poly
-              )
-            ) {
-              self.clusteredPoints.push(clusterCenter);
-              //self.addMarkerToMap(clusterCenter.geometry.coordinates);
-              // Get weather for the center of the cluster and add icon to the map:
-              self.getPointWeather(clusterCenter.geometry.coordinates, false);
-            }
-          });
+          // // Create clusters from the grid points
+          // var clustered = turf.clustersKmeans(
+          //   turf.featureCollection(self.allPoints),
+          //   { numberOfClusters: 20 }
+          // );
+          // // Iterate over each cluster
+          // turf.clusterEach(clustered, "cluster", function(
+          //   cluster,
+          //   clusterValue,
+          //   currentIndex
+          // ) {
+          //   let clusterCenter = turf.center(cluster);
+          //   if (
+          //     turf.booleanPointInPolygon(
+          //       turf.point(clusterCenter.geometry.coordinates),
+          //       poly
+          //     )
+          //   ) {
+          //     self.clusteredPoints.push(clusterCenter);
+          //     // Get weather for the center of the cluster and add icon to the map:
+          //     self.getPointWeather(clusterCenter.geometry.coordinates, false);
+          //   }
+          // });
         })
         .catch(e => {
           console.log("error", e);
