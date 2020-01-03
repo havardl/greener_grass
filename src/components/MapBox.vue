@@ -395,7 +395,8 @@ export default {
       isochroneCoordinates: [],
       isochronePoly: null,
       isochroneBbox: [],
-      isochroneBboxReversed: []      
+      isochroneBboxReversed: [],
+      overpassObjects: []
     };
   },
   mounted() {
@@ -443,14 +444,101 @@ export default {
     isochroneCoordinates() {
       // When we have recieved a isochrone shape:
       this.zoomToBounds();
+    },
+    isochroneBboxReversed() {
+      let self = this;
+      this.runOverpassQuery(this.isochroneBboxReversed).then(function(
+        response
+      ) {
+        self.handleOverpass(response);
+      });
     }
   },
   methods: {
+    mapOrder(array, order, key) {
+      array.sort(function(a, b) {
+        var A = a[key],
+          B = b[key];
+
+        if (order.indexOf(A) > order.indexOf(B)) {
+          return 1;
+        } else {
+          return -1;
+        }
+      });
+
+      return array;
+    },
+    handleOverpass(data) {
+      let self = this;
+      // Overpass returns way and node objects. Way objects are made up of nodes which hold the actual lat,lng information we need.
+      // But overpass can also return single nodes (eg. mountain top), so we need to handle both cases
+
+      let ways = [];
+      let nodes = [];
+      data.forEach(function(element) {
+        if (element.type === "way") {
+          ways.push(element);
+        } else if (element.type === "node") {
+          nodes.push(element);
+        }
+      });
+
+      let geojson = {
+        type: "FeatureCollection",
+        features: []
+      };
+
+      if (ways.length > 0) {
+        let index = 0;
+        ways.forEach(function(way) {
+          let included_nodes = way.nodes;
+          let result = nodes.filter(function(e) {
+            return included_nodes.indexOf(e.id) != -1;
+          });
+          result = self.mapOrder(result, included_nodes, "id");
+          let way_coords = result.map(x => [x.lon, x.lat]);
+          way_coords.push(way_coords[0]);
+
+          let area = [];
+          way_coords.forEach(function(point){
+            area.push(turf.point(point))
+          })
+
+          var features = turf.featureCollection(area);
+          var center = turf.center(features);   
+          
+          self.clusteredPoints.push(center);
+          // Get weather for the center of the cluster and add icon to the map:
+          self.getPointWeather(center.geometry.coordinates, false);          
+
+          geojson.features.push({
+            type: "Feature",
+            geometry: {
+              coordinates: [way_coords],
+              type: "Polygon"
+            },
+          });
+          // self.addPolygon(index, way_coords);
+          // index += 1;
+        });
+        self.map.getSource("overpass").setData(geojson);
+      } else {
+        // Only single points:
+        console.log(nodes);
+          nodes.forEach(function(point){
+            self.getPointWeather([point.lon, point.lat], false); 
+          })        
+      }
+    },
     zoomToBounds() {
       // Zoom the map to the bounds of the isochrone shape:
       let bounds = this.isochroneCoordinates.reduce(function(bounds, coord) {
         return bounds.extend(coord);
-      }, new window.mapboxgl.LngLatBounds(this.isochroneCoordinates[0], this.isochroneCoordinates[0]));
+      }, new window.mapboxgl.LngLatBounds(
+        this.isochroneCoordinates[0],
+        this.isochroneCoordinates[0]
+      ));
 
       this.map.fitBounds(bounds, {
         padding: { top: 5, bottom: 5, left: 5, right: 5 },
@@ -458,7 +546,7 @@ export default {
         linear: false
       });
     },
-    runOverpassQuery(bbox) {
+    async runOverpassQuery(bbox) {
       // Query the Overpass API within a specific bbox
       let poi_type = this.destination;
       let query = `
@@ -472,7 +560,7 @@ export default {
         out body;
       `;
       console.log(query);
-      let res = window
+      let res = await window
         .queryOverpass(query, { fetchMode: "cors" })
         .then(function(response) {
           return response;
@@ -505,7 +593,7 @@ export default {
         mapboxgl: window.mapboxgl,
         placeholder: "Søk etter sted",
         collapsed: true,
-        countries: "NO,DK,SE",
+        countries: "NO,DK,SE"
         // render: function(item) {
         //   // extract the item's maki icon or use a default
         //   return (
@@ -539,7 +627,7 @@ export default {
         waiting();
       });
       this.map.on("click", function(e) {
-        // Add a weather forecast on the map when clicking. 
+        // Add a weather forecast on the map when clicking.
         // TODO: Add UI to make this a feature which you have to turn on
 
         let clickedCoords = [e.lngLat.lng, e.lngLat.lat];
@@ -563,25 +651,15 @@ export default {
           self.getPointWeather(clickedCoords, true);
         }
       });
-      // this.map.on("flystart", function() {
-      //   self.flying = true;
-      //   self.loading = true;
-      //   self.stillLoading();
-      // });
-      // this.map.on("flyend", function() {
-      //   self.flying = false;
-      //   self.loading = false;
-      //   self.finishedLoading();
-      // });
       // this.map.on("movestart", function() {
       //   console.log("Started moving");
       //   //self.loading = true;
-      //   self.stillLoading();        
-      // });      
+      //   self.stillLoading();
+      // });
       // this.map.on("moveend", function() {
       //   console.log("Stopped moving");
       //   //self.loading = false;
-      //   self.finishedLoading();        
+      //   self.finishedLoading();
       // });
       this.map.on("mousemove", function() {
         // Because of the UI, we need to do this here:
@@ -622,6 +700,30 @@ export default {
           }
         },
         "poi-label"
+      );
+      // When the map loads, add the source and layer
+      this.map.addSource("overpass", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: []
+        }
+      });
+      this.map.addLayer(
+        {
+          id: "overpassLayer",
+          type: "fill",
+          // Use "iso" as the data source for this layer
+          source: "overpass",
+          layout: {},
+          paint: {
+            // The fill color for the layer is set to a light purple
+            "fill-color": "#000000",
+            "fill-opacity": 0.8
+          },
+          filter: ["in", "$type", "Polygon"]
+        },
+        "isoLayer"
       );
     },
     removeInteractive() {
@@ -857,7 +959,7 @@ export default {
     },
     async getIso() {
       // Get the isochrone polygon around a point
-      // Currently using the Mapbox API for this, but might change. 
+      // Currently using the Mapbox API for this, but might change.
       let self = this;
       let urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
       let lon = this.selectedCoordinates[0];
@@ -883,7 +985,9 @@ export default {
         .then(response => {
           // Get the isochrone shape as polygon and add it to the map
           self.map.getSource("iso").setData(response.data);
-          self.isochroneCoordinates = response.data.features[0].geometry.coordinates[0];
+
+          self.isochroneCoordinates =
+            response.data.features[0].geometry.coordinates[0];
           self.isochronePoly = turf.polygon([self.isochroneCoordinates]);
 
           // let line = turf.polygonToLine(poly);
@@ -914,15 +1018,7 @@ export default {
           self.isochroneBbox = [lon_min, lat_min, lon_max, lat_max];
           self.isochroneBboxReversed = [lat_min, lon_min, lat_max, lon_max];
 
-          // MOVE:
-          // // peak, beach
-          // self
-          //   .runOverpassQuery(extent_reveresed)
-          //   .then(function(response) {
-          //     console.log(response);
-          //   });
-
-          // ALL REDUNDANT: 
+          // ALL REDUNDANT:
           // let cellSide = 0.5;
           // let options = { units: "kilometers" };
           // let grid = turf.pointGrid(extent, cellSide, options);
@@ -1188,6 +1284,28 @@ export default {
           "line-opacity": 0.8
         }
       });
+    },
+    addPolygon(id, coords) {
+      this.map.addLayer({
+        id: "shape_" + id,
+        type: "fill",
+        source: {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [coords]
+            }
+          }
+        },
+        paint: {
+          "fill-color": "#888888",
+          "fill-opacity": 0.4
+        }
+      });
+      console.log(this.map.getStyle().layers);
     },
     removeRoute() {
       if (this.map.getSource("route")) {
