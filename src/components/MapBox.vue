@@ -12,7 +12,10 @@
         <div id="geocoder"></div>
       </div>
 
-      <div class="menu-item mt-2" @mouseover="[showTime = false, showTravel = true]">
+      <div
+        class="menu-item mt-2"
+        @mouseover="[(showTime = false), (showTravel = true)]"
+      >
         <div class="menu-icon" @click="showTravel = !showTravel">
           <font-awesome-icon
             :icon="['fas', currentProfile]"
@@ -53,7 +56,7 @@
 
       <div
         class="menu-item mt-2"
-        @mouseover="[showTime=true, showTravel = false]"
+        @mouseover="[(showTime = true), (showTravel = false)]"
       >
         <div class="menu-icon" @click="showTime = !showTime">
           <font-awesome-icon
@@ -353,6 +356,7 @@ export default {
   mounted() {
     window.mapboxgl = require("mapbox-gl");
     window.MapboxGeocoder = require("@mapbox/mapbox-gl-geocoder");
+    window.queryOverpass = require("@derhuerst/query-overpass");
     this.createMap();
   },
   computed: {
@@ -380,9 +384,32 @@ export default {
       if (this.selectedName != "") {
         this.getIso();
       }
-    },
+    }
   },
   methods: {
+    runOverpassQuery(bbox, poi_type) {
+      let query = `
+        [out:json][timeout:25];
+        (
+          way["natural"="${poi_type}"](${bbox});
+        );
+        (._;>;);
+        out body;
+      `;
+      // node["natural"="${poi_type}"](${bbox});
+      // way["natural"="${poi_type}"](${bbox});
+      // relation["natural"="${poi_type}"](${bbox});
+      let res = window
+        .queryOverpass(query, { fetchMode: "cors" })
+        .then(function(response) {
+          //console.log(response);
+          return response;
+        })
+        .catch(function(e) {
+          console.error(e);
+        });
+      return res;
+    },
     createMap() {
       let self = this;
       mapboxgl.accessToken = this.token;
@@ -618,7 +645,7 @@ export default {
                 " og " +
                 self.data.precipitation.maxvalue +
                 "</p>" +
-                "<img src=" +
+                "<img class'weather-icon' src=" +
                 self.getLocalWeatherIcon(self.data.symbol.number) +
                 " />"
             )
@@ -867,6 +894,12 @@ export default {
           let lat_min = this.getMin(lats);
           let lat_max = this.getMax(lats);
           let extent = [lon_min, lat_min, lon_max, lat_max];
+
+          self
+            .runOverpassQuery([lat_min, lon_min, lat_max, lon_max], "beach")
+            .then(function(response) {
+              console.log(response);
+            });
 
           let bounds = coordinates.reduce(function(bounds, coord) {
             return bounds.extend(coord);
