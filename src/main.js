@@ -5,10 +5,10 @@ import store from './store'
 import './registerServiceWorker'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faClock, faWalking, faCar, faBiking } from '@fortawesome/free-solid-svg-icons'
+import { faWater, faMountain, faClock, faWalking, faCar, faBiking } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-library.add(faClock, faWalking, faCar, faBiking)
+library.add(faWater, faMountain, faClock, faWalking, faCar, faBiking)
 
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 

@@ -14,7 +14,41 @@
 
       <div
         class="menu-item mt-2"
-        @mouseover="[(showTime = false), (showTravel = true)]"
+        @mouseover="[(showTime = false), (showDestination = true), (showTravel=false)]"
+      >
+        <div class="menu-icon" @click="showDestination = !showDestination">
+          <font-awesome-icon
+            :icon="['fas', currentDestination]"
+            size="lg"
+            :style="{ color: '#757575' }"
+          />
+        </div>
+        <transition name="slide">
+          <div class="menu-content" v-if="showDestination">
+            <b-button-group size="sm" style="padding-top:2px;">
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'mountain']"
+                  size="lg"
+                  @click="destination = 'peak'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'water']"
+                  size="lg"
+                  @click="destination = 'beach'"
+                />
+              </b-button>
+            </b-button-group>
+          </div>
+        </transition>
+      </div>
+
+      <div
+        class="menu-item mt-2"
+        @mouseover="[(showTime = false), (showTravel = true), (showDestination=false)]"
       >
         <div class="menu-icon" @click="showTravel = !showTravel">
           <font-awesome-icon
@@ -56,7 +90,7 @@
 
       <div
         class="menu-item mt-2"
-        @mouseover="[(showTime = true), (showTravel = false)]"
+        @mouseover="[(showTime = true), (showTravel = false), (showDestination=false)]"
       >
         <div class="menu-icon" @click="showTime = !showTime">
           <font-awesome-icon
@@ -122,7 +156,6 @@
   left: 12px;
 }
 .menu-content {
-  width: 100%;
   padding-left: 55px;
   height: 100%;
   background-color: #fff;
@@ -348,8 +381,10 @@ export default {
       loading: true,
       showTravel: false,
       showTime: false,
+      showDestination: false,
       uiTimeInterval: [15, 30, 45, 60],
       profile: "cycling",
+      destination: "beach",
       minutes: 15
     };
   },
@@ -367,6 +402,13 @@ export default {
         return "biking";
       } else if (this.profile === "driving") {
         return "car";
+      }
+    },
+    currentDestination() {
+      if (this.destination === "peak") {
+        return "mountain";
+      } else if (this.destination === "beach") {
+        return "water";
       }
     }
   },
@@ -387,22 +429,22 @@ export default {
     }
   },
   methods: {
-    runOverpassQuery(bbox, poi_type) {
+    runOverpassQuery(bbox) {
+      let poi_type = this.destination;
       let query = `
         [out:json][timeout:25];
         (
           way["natural"="${poi_type}"](${bbox});
+          node["natural"="${poi_type}"](${bbox});
+          relation["natural"="${poi_type}"](${bbox});
         );
         (._;>;);
         out body;
       `;
-      // node["natural"="${poi_type}"](${bbox});
-      // way["natural"="${poi_type}"](${bbox});
-      // relation["natural"="${poi_type}"](${bbox});
+      console.log(query);
       let res = window
         .queryOverpass(query, { fetchMode: "cors" })
         .then(function(response) {
-          //console.log(response);
           return response;
         })
         .catch(function(e) {
@@ -525,6 +567,7 @@ export default {
         // Because of the UI, we need to do this here:
         self.showTime = false;
         self.showTravel = false;
+        self.showDestination = false;
       });
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
@@ -895,8 +938,9 @@ export default {
           let lat_max = this.getMax(lats);
           let extent = [lon_min, lat_min, lon_max, lat_max];
 
+          // peak, beach
           self
-            .runOverpassQuery([lat_min, lon_min, lat_max, lon_max], "beach")
+            .runOverpassQuery([lat_min, lon_min, lat_max, lon_max])
             .then(function(response) {
               console.log(response);
             });
