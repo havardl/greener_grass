@@ -6,151 +6,239 @@
         <p>loading</p>
       </div>
     </div>
-    <!-- <div
-      class="absolute fl my24 mx24 py24 px24 bg-gray-faint round"
-      style="z-index:999"
-    >
-      <div>
-        <button v-on:click="removeAllMarkersFromMap">
-          Remove markers
-        </button>
+
+    <div class="menu-wrapper mt-2 ml-2 mr-2">
+      <div class="menu-item" style="z-index:15;">
+        <div id="geocoder"></div>
       </div>
-      <div id="geocoder"></div>
-      <form id="params">
-        <h4 class="txt-m txt-bold mb6">Chose a travel mode:</h4>
-        <div class="mb12 mr12 toggle-group align-center">
-          <label class="toggle-container">
-            <input name="profile" type="radio" value="walking" />
-            <div class="toggle toggle--active-null toggle--null">Walking</div>
-          </label>
-          <label class="toggle-container">
-            <input name="profile" type="radio" value="cycling" checked />
-            <div class="toggle toggle--active-null toggle--null">Cycling</div>
-          </label>
-          <label class="toggle-container">
-            <input name="profile" type="radio" value="driving" />
-            <div class="toggle toggle--active-null toggle--null">Driving</div>
-          </label>
-        </div>
-        <h4 class="txt-m txt-bold mb6">Chose a maximum duration:</h4>
-        <div class="mb12 mr12 toggle-group align-center">
-          <label class="toggle-container">
-            <input name="duration" type="radio" value="15" checked />
-            <div class="toggle toggle--active-null toggle--null">15 min</div>
-          </label>
-          <label class="toggle-container">
-            <input name="duration" type="radio" value="30" />
-            <div class="toggle toggle--active-null toggle--null">30 min</div>
-          </label>
-          <label class="toggle-container">
-            <input name="duration" type="radio" value="45" />
-            <div class="toggle toggle--active-null toggle--null">45 min</div>
-          </label>
-          <label class="toggle-container">
-            <input name="duration" type="radio" value="60" />
-            <div class="toggle toggle--active-null toggle--null">60 min</div>
-          </label>
-        </div>
-      </form>
-    </div> -->
-    <div class="ui">
-      <div class="ui-widget">
-        <b-container fluid>
-          <b-row>
-            <b-col sm="10">
-              <b-collapse id="collapse-1" class="mt-2">
-                <b-card class="ui-content">
-                  <div>
-                    <button v-on:click="removeAllMarkersFromMap">
-                      Remove markers
-                    </button>
-                  </div>
-                  <div id="geocoder"></div>
-                  <!-- <b-button v-b-toggle.collapse-1-inner size="sm">Toggle Inner Collapse</b-button>
-            <b-collapse id="collapse-1-inner" class="mt-2">
-              <b-card>Hello!</b-card>
-            </b-collapse> -->
 
-                  <form id="params">
-                    <h4 class="txt-m txt-bold mb6">Chose travel mode:</h4>
-                    <div class="mb12 mr12 toggle-group align-center">
-                      <label class="toggle-container">
-                        <input name="profile" type="radio" value="walking" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          <font-awesome-icon :icon="['fas', 'walking']" />
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input
-                          name="profile"
-                          type="radio"
-                          value="cycling"
-                          checked
-                        />
-                        <div class="toggle toggle--active-null toggle--null">
-                          <font-awesome-icon :icon="['fas', 'biking']" />
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input name="profile" type="radio" value="driving" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          <font-awesome-icon :icon="['fas', 'car']" />
-                        </div>
-                      </label>
-                    </div>
-                    <h4 class="txt-m txt-bold mb6">
-                      Chose maximum duration:
-                    </h4>
-                    <div class="mb12 mr12 toggle-group align-center">
-                      <label class="toggle-container">
-                        <input
-                          name="duration"
-                          type="radio"
-                          value="15"
-                          checked
-                        />
-                        <div class="toggle toggle--active-null toggle--null">
-                          15 min
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input name="duration" type="radio" value="30" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          30 min
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input name="duration" type="radio" value="45" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          45 min
-                        </div>
-                      </label>
-                      <label class="toggle-container">
-                        <input name="duration" type="radio" value="60" />
-                        <div class="toggle toggle--active-null toggle--null">
-                          60 min
-                        </div>
-                      </label>
-                    </div>
-                  </form>
-                </b-card>
-              </b-collapse>
-            </b-col>
-
-            <b-col class="pt-3" sm="2">
-              <b-button v-b-toggle.collapse-1 variant="info" size="sm">
-                <span class="when-opened">Close</span>
-                <span class="when-closed">Open</span> Menu
+      <div
+        class="menu-item mt-2"
+        @mouseover="
+          [(showTime = false), (showDestination = true), (showTravel = false)]
+        "
+      >
+        <div class="menu-icon" @click="showDestination = !showDestination">
+          <font-awesome-icon
+            :icon="['fas', currentDestination]"
+            size="lg"
+            :style="{ color: '#757575' }"
+          />
+        </div>
+        <transition name="slide">
+          <div class="menu-content" v-if="showDestination">
+            <b-button-group size="sm" style="padding-top:2px;">
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'mountain']"
+                  size="lg"
+                  @click="destination = 'peak'"
+                />
               </b-button>
-            </b-col>
-          </b-row>
-        </b-container>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'water']"
+                  size="lg"
+                  @click="destination = 'beach'"
+                />
+              </b-button>
+            </b-button-group>
+          </div>
+        </transition>
+      </div>
+
+      <div
+        class="menu-item mt-2"
+        @mouseover="
+          [(showTime = false), (showTravel = true), (showDestination = false)]
+        "
+      >
+        <div class="menu-icon" @click="showTravel = !showTravel">
+          <font-awesome-icon
+            :icon="['fas', currentProfile]"
+            size="lg"
+            :style="{ color: '#757575' }"
+          />
+        </div>
+        <transition name="slide">
+          <div class="menu-content" v-if="showTravel">
+            <b-button-group size="sm" style="padding-top:2px;">
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'walking']"
+                  size="lg"
+                  @click="profile = 'walking'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'biking']"
+                  size="lg"
+                  @click="profile = 'cycling'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'car']"
+                  size="lg"
+                  @click="profile = 'driving'"
+                />
+              </b-button>
+            </b-button-group>
+          </div>
+        </transition>
+      </div>
+
+      <div
+        class="menu-item mt-2"
+        @mouseover="
+          [(showTime = true), (showTravel = false), (showDestination = false)]
+        "
+      >
+        <div class="menu-icon" @click="showTime = !showTime">
+          <font-awesome-icon
+            :icon="['fas', 'clock']"
+            size="lg"
+            :style="{ color: '#757575' }"
+          />
+        </div>
+        <transition name="slide">
+          <div class="menu-content" v-if="showTime">
+            <vue-slider
+              class="ui-slider"
+              v-model="minutes"
+              :data="uiTimeInterval"
+              :marks="true"
+              :adsorb="true"
+              :contained="true"
+              :drag-on-click="true"
+            ></vue-slider>
+          </div>
+        </transition>
       </div>
     </div>
   </div>
 </template>
 
 <style lang="scss">
+#geocoder,
+.suggestions-wrapper,
+.mapboxgl-ctrl-geocoder {
+  z-index: 5 !important;
+}
+.menu-wrapper {
+  // pointer-events: none;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+}
+.menu-item {
+  height: 50px;
+  min-width: 200px;
+  font-size: 15px;
+  line-height: 20px;
+  max-width: 360px;
+  z-index: 1;
+}
+.menu-icon {
+  position: fixed;
+  z-index: 1;
+  background-color: #fff;
+  height: 50px;
+  width: 50px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+  transition: width 0.25s, min-width 0.25s;
+}
+.menu-icon > svg {
+  position: absolute;
+  top: 13px;
+  left: 12px;
+}
+.menu-content {
+  padding-left: 55px;
+  height: 100%;
+  background-color: #fff;
+  float: left;
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+.ui-slider {
+  min-width: 200px;
+  width: 50% !important;
+  max-width: 50% !important;
+  margin-top: 10px;
+}
+.vue-slider-mark-label {
+  font-size: 12px !important;
+  margin-top: 5px !important;
+}
+.ui-button {
+  background-color: #fff !important;
+  border: 0px solid #fff !important;
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) {
+}
+@media (min-width: 640px) {
+  .menu-item {
+    height: 36px;
+  }
+  .menu-icon {
+    height: 36px;
+    width: 36px;
+  }
+  .menu-icon > svg {
+    top: 8px;
+    left: 7px;
+  }
+  .menu-content {
+    padding-left: 40px;
+  }
+  .ui-slider {
+    margin-top: 0px;
+  }
+}
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+}
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+}
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+}
+.slide-enter-active {
+  animation: slide-in 0.25s;
+}
+.slide-leave-active {
+  animation: slide-in 0.25s reverse;
+}
+@keyframes slide-in {
+  0% {
+    -webkit-transform: translateX(-80%);
+  }
+  100% {
+    -webkit-transform: translateX(0%);
+  }
+}
+
+@-webkit-keyframes slide-in {
+  0% {
+    transform: translateX(-80%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
 .collapsed > .when-opened,
 :not(.collapsed) > .when-closed {
   display: none;
@@ -267,12 +355,17 @@
 <script>
 import * as turf from "@turf/turf";
 import axios from "axios";
+import VueSlider from "vue-slider-component";
+import "vue-slider-component/theme/default.css";
 
 export default {
   name: "MapBox",
   props: {
     center: Array,
     marker: Object
+  },
+  components: {
+    VueSlider
   },
   data: function() {
     return {
@@ -286,30 +379,197 @@ export default {
       selectedName: "",
       selectedDistance: 0,
       selectedDuration: 0,
-      profile: "cycling",
-      minutes: 15,
       allMarkers: [],
       allPoints: [],
       clusteredPoints: [],
       userAddedPoints: [],
       flying: false,
-      loading: true
+      loading: true,
+      showTravel: false,
+      showTime: false,
+      showDestination: false,
+      uiTimeInterval: [15, 30, 45, 60],
+      profile: "cycling",
+      destination: "beach",
+      minutes: 15,
+      isochroneCoordinates: [],
+      isochronePoly: null,
+      isochroneBbox: [],
+      isochroneBboxReversed: [],
+      overpassObjects: []
     };
   },
   mounted() {
     window.mapboxgl = require("mapbox-gl");
     window.MapboxGeocoder = require("@mapbox/mapbox-gl-geocoder");
+    window.queryOverpass = require("@derhuerst/query-overpass");
     this.createMap();
-    // document.querySelector('.mapboxgl-ctrl-geocoder input').focus()
   },
-  computed: {},
+  computed: {
+    currentProfile() {
+      if (this.profile === "walking") {
+        return "walking";
+      } else if (this.profile === "cycling") {
+        return "biking";
+      } else if (this.profile === "driving") {
+        return "car";
+      }
+    },
+    currentDestination() {
+      if (this.destination === "peak") {
+        return "mountain";
+      } else if (this.destination === "beach") {
+        return "water";
+      }
+    }
+  },
   watch: {
     data() {
+      // When weather data is set (a bit messy and unintuitive)
       this.getIso();
       this.addSelectedLocation();
+    },
+    profile() {
+      // When travel mode is changed
+      if (this.selectedName != "") {
+        this.getIso();
+      }
+    },
+    minutes() {
+      // When travel time is changed
+      if (this.selectedName != "") {
+        this.getIso();
+      }
+    },
+    isochroneCoordinates() {
+      // When we have recieved a isochrone shape:
+      this.zoomToBounds();
+    },
+    isochroneBboxReversed() {
+      let self = this;
+      this.runOverpassQuery(this.isochroneBboxReversed).then(function(
+        response
+      ) {
+        self.handleOverpass(response);
+      });
     }
   },
   methods: {
+    mapOrder(array, order, key) {
+      array.sort(function(a, b) {
+        var A = a[key],
+          B = b[key];
+
+        if (order.indexOf(A) > order.indexOf(B)) {
+          return 1;
+        } else {
+          return -1;
+        }
+      });
+
+      return array;
+    },
+    handleOverpass(data) {
+      let self = this;
+      // Overpass returns way and node objects. Way objects are made up of nodes which hold the actual lat,lng information we need.
+      // But overpass can also return single nodes (eg. mountain top), so we need to handle both cases
+
+      let ways = [];
+      let nodes = [];
+      data.forEach(function(element) {
+        if (element.type === "way") {
+          ways.push(element);
+        } else if (element.type === "node") {
+          nodes.push(element);
+        }
+      });
+
+      let geojson = {
+        type: "FeatureCollection",
+        features: []
+      };
+
+      if (ways.length > 0) {
+        let index = 0;
+        ways.forEach(function(way) {
+          let included_nodes = way.nodes;
+          let result = nodes.filter(function(e) {
+            return included_nodes.indexOf(e.id) != -1;
+          });
+          result = self.mapOrder(result, included_nodes, "id");
+          let way_coords = result.map(x => [x.lon, x.lat]);
+          way_coords.push(way_coords[0]);
+
+          let area = [];
+          way_coords.forEach(function(point){
+            area.push(turf.point(point))
+          })
+
+          var features = turf.featureCollection(area);
+          var center = turf.center(features);   
+          
+          self.clusteredPoints.push(center);
+          // Get weather for the center of the cluster and add icon to the map:
+          self.getPointWeather(center.geometry.coordinates, false);          
+
+          geojson.features.push({
+            type: "Feature",
+            geometry: {
+              coordinates: [way_coords],
+              type: "Polygon"
+            },
+          });
+          // self.addPolygon(index, way_coords);
+          // index += 1;
+        });
+        self.map.getSource("overpass").setData(geojson);
+      } else {
+        // Only single points:
+        console.log(nodes);
+          nodes.forEach(function(point){
+            self.getPointWeather([point.lon, point.lat], false); 
+          })        
+      }
+    },
+    zoomToBounds() {
+      // Zoom the map to the bounds of the isochrone shape:
+      let bounds = this.isochroneCoordinates.reduce(function(bounds, coord) {
+        return bounds.extend(coord);
+      }, new window.mapboxgl.LngLatBounds(
+        this.isochroneCoordinates[0],
+        this.isochroneCoordinates[0]
+      ));
+
+      this.map.fitBounds(bounds, {
+        padding: { top: 5, bottom: 5, left: 5, right: 5 },
+        maxZoom: 12,
+        linear: false
+      });
+    },
+    async runOverpassQuery(bbox) {
+      // Query the Overpass API within a specific bbox
+      let poi_type = this.destination;
+      let query = `
+        [out:json][timeout:25];
+        (
+          way["natural"="${poi_type}"](${bbox});
+          node["natural"="${poi_type}"](${bbox});
+          relation["natural"="${poi_type}"](${bbox});
+        );
+        (._;>;);
+        out body;
+      `;
+      console.log(query);
+      let res = await window
+        .queryOverpass(query, { fetchMode: "cors" })
+        .then(function(response) {
+          return response;
+        })
+        .catch(function(e) {
+          console.error(e);
+        });
+      return res;
+    },
     createMap() {
       let self = this;
       mapboxgl.accessToken = this.token;
@@ -318,7 +578,7 @@ export default {
         container: "map",
         style: "mapbox://styles/mapbox/light-v10",
         center: this.center,
-        zoom: 6,
+        zoom: 3.5,
         accessToken: this.token,
         attributionControl: false
       };
@@ -334,6 +594,14 @@ export default {
         placeholder: "Søk etter sted",
         collapsed: true,
         countries: "NO,DK,SE"
+        // render: function(item) {
+        //   // extract the item's maki icon or use a default
+        //   return (
+        //     "<div class='geocoder-dropdown-item' style='z-index:20;'><span class='geocoder-dropdown-text'>" +
+        //     item.text +
+        //     "</span></div>"
+        //   );
+        // }
       });
       //this.map.addControl(this.geocoder);
       document
@@ -341,7 +609,7 @@ export default {
         .appendChild(this.geocoder.onAdd(this.map));
 
       this.map.on("load", () => {
-        this.addIsoUI();
+        //this.addIsoUI();
         this.addIsoLayer();
       });
       this.map.on("style.load", () => {
@@ -358,30 +626,9 @@ export default {
         };
         waiting();
       });
-      // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
       this.map.on("click", function(e) {
-        // var features = self.map.queryRenderedFeatures(e.point);
-
-        // // Limit the number of properties we're displaying for
-        // // legibility and performance
-        // var displayProperties = [
-        //   "type",
-        //   "properties",
-        //   "id",
-        //   "layer",
-        //   "source",
-        //   "sourceLayer",
-        //   "state"
-        // ];
-
-        // var displayFeatures = features.map(function(feat) {
-        //   var displayFeat = {};
-        //   displayProperties.forEach(function(prop) {
-        //     displayFeat[prop] = feat[prop];
-        //   });
-        //   return displayFeat;
-        // });
-        // console.log(displayFeatures)
+        // Add a weather forecast on the map when clicking.
+        // TODO: Add UI to make this a feature which you have to turn on
 
         let clickedCoords = [e.lngLat.lng, e.lngLat.lat];
         let outsideBounds = true;
@@ -404,36 +651,31 @@ export default {
           self.getPointWeather(clickedCoords, true);
         }
       });
-      this.map.on("flystart", function() {
-        self.flying = true;
-      });
-      this.map.on("flyend", function() {
-        self.flying = false;
-      });
-      this.map.on("moveend", function() {
-        console.log("Stopped moving");
+      // this.map.on("movestart", function() {
+      //   console.log("Started moving");
+      //   //self.loading = true;
+      //   self.stillLoading();
+      // });
+      // this.map.on("moveend", function() {
+      //   console.log("Stopped moving");
+      //   //self.loading = false;
+      //   self.finishedLoading();
+      // });
+      this.map.on("mousemove", function() {
+        // Because of the UI, we need to do this here:
+        self.showTime = false;
+        self.showTravel = false;
+        self.showDestination = false;
       });
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
         // https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md#on
         self.getWeather(result);
+        // document.querySelectorAll(".menu-icon").forEach(el => el.style.position = "fixed");
       });
-    },
-    addIsoUI() {
-      let self = this;
-      let params = document.getElementById("params");
-      params.addEventListener("change", function(e) {
-        //self.removeAllMarkersFromMap();
-        if (e.target.name === "profile") {
-          self.profile = e.target.value;
-        } else if (e.target.name === "duration") {
-          self.minutes = e.target.value;
-        }
-        if (self.selectedName != "") {
-          console.log("get iso");
-          self.getIso();
-        }
-      });
+      // this.geocoder.on("loading", function() {
+      //   document.querySelectorAll(".menu-icon").forEach(el => el.style.position = "relative");
+      // })
     },
     addIsoLayer() {
       // When the map loads, add the source and layer
@@ -459,8 +701,8 @@ export default {
         },
         "poi-label"
       );
-
-      this.map.addSource("iso_tess", {
+      // When the map loads, add the source and layer
+      this.map.addSource("overpass", {
         type: "geojson",
         data: {
           type: "FeatureCollection",
@@ -469,17 +711,19 @@ export default {
       });
       this.map.addLayer(
         {
-          id: "isoTessLayer",
+          id: "overpassLayer",
           type: "fill",
-          source: "iso_tess",
+          // Use "iso" as the data source for this layer
+          source: "overpass",
           layout: {},
           paint: {
             // The fill color for the layer is set to a light purple
-            "fill-color": "#5a3fc0",
-            "fill-opacity": 0.3
-          }
+            "fill-color": "#000000",
+            "fill-opacity": 0.8
+          },
+          filter: ["in", "$type", "Polygon"]
         },
-        "poi-label"
+        "isoLayer"
       );
     },
     removeInteractive() {
@@ -496,15 +740,17 @@ export default {
     addInteractive() {
       // set layer visibility
       // turn off interactivity
+      this.map.dragPan.enable();
       this.map.scrollZoom.enable();
       this.map.boxZoom.enable();
       this.map.dragRotate.enable();
-      this.map.dragPan.enable();
       this.map.keyboard.enable();
       this.map.doubleClickZoom.enable();
       this.map.touchZoomRotate.enable();
-    },    
+    },
     addSelectedLocation() {
+      // Add a marker for the user's location
+
       let self = this;
       var el = document.createElement("div");
       el.className = "selected-marker";
@@ -528,7 +774,9 @@ export default {
                 " og " +
                 self.data.precipitation.maxvalue +
                 "</p>" +
-                "<img src=" + self.getLocalWeatherIcon(self.data.symbol.number) + " />"
+                "<img class'weather-icon' src=" +
+                self.getLocalWeatherIcon(self.data.symbol.number) +
+                " />"
             )
         )
         .addTo(self.map);
@@ -548,15 +796,35 @@ export default {
       return url;
     },
     getLocalWeatherIcon(symbol_id) {
-      symbol_id = parseInt(symbol_id)
-      console.log(symbol_id)
-      let basic = [4,9,10,11,12,13,14,15,22,23,30,31,32,33,34,46,47,48,49,50];
+      symbol_id = parseInt(symbol_id);
+      let basic = [
+        4,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        22,
+        23,
+        30,
+        31,
+        32,
+        33,
+        34,
+        46,
+        47,
+        48,
+        49,
+        50
+      ];
       let url = "";
-      if(basic.includes(symbol_id)) {
+      if (basic.includes(symbol_id)) {
         url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
       } else {
         url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
-        url = url + "d"
+        url = url + "d";
       }
       return "img/svg/" + url + ".svg";
     },
@@ -689,8 +957,9 @@ export default {
         return forecasts[0];
       }
     },
-    // Create a function that sets up the Isochrone API query then makes an Ajax call
     async getIso() {
+      // Get the isochrone polygon around a point
+      // Currently using the Mapbox API for this, but might change.
       let self = this;
       let urlBase = "https://api.mapbox.com/isochrone/v1/mapbox/";
       let lon = this.selectedCoordinates[0];
@@ -711,42 +980,34 @@ export default {
       // Various color for minutes:
       //"&contours_colors=6706ce,04e813,4286f4" +
 
-      //console.log(query);
       const res = await axios
         .get(query)
         .then(response => {
-          console.log(response);
-          // Add isochrones:
+          // Get the isochrone shape as polygon and add it to the map
           self.map.getSource("iso").setData(response.data);
-          let coordinates = response.data.features[0].geometry.coordinates[0];
 
-          // Polygon to linestring - use this for along side and calculations on the markers
-          let poly = turf.polygon([coordinates]);
-          let line = turf.polygonToLine(poly);
-          line = turf.lineString(line.geometry.coordinates);
+          self.isochroneCoordinates =
+            response.data.features[0].geometry.coordinates[0];
+          self.isochronePoly = turf.polygon([self.isochroneCoordinates]);
 
-          // // Create tesselate within polygon
-          // let tess = turf.tesselate(poly);
-          // // Add tesselate:
-          // self.map.getSource("iso_tess").setData(tess);
-          // console.log(self.map.getSource("iso_tess"));
+          // let line = turf.polygonToLine(poly);
+          // line = turf.lineString(line.geometry.coordinates);
 
-          // Add points along the edge of the shape
-          let distance = 1;
-          let length = turf.lineDistance(line, { units: "kilometers" });
-          for (let i = 1; i <= length / distance; i++) {
-            let point = turf.along(line, i * distance, {
-              units: "kilometers"
-            });
-            //self.addMarkerToMap(point.geometry.coordinates);
-            self.allPoints.push(point);
-          }
+          // // Add points along the edge of the shape
+          // let distance = 1;
+          // let length = turf.lineDistance(line, { units: "kilometers" });
+          // for (let i = 1; i <= length / distance; i++) {
+          //   let point = turf.along(line, i * distance, {
+          //     units: "kilometers"
+          //   });
+          //   self.allPoints.push(point);
+          // }
 
-          let lons = coordinates.map(function(elt) {
+          let lons = self.isochroneCoordinates.map(function(elt) {
             return elt[0];
           });
 
-          let lats = coordinates.map(function(elt) {
+          let lats = self.isochroneCoordinates.map(function(elt) {
             return elt[1];
           });
 
@@ -754,70 +1015,58 @@ export default {
           let lon_max = this.getMax(lons);
           let lat_min = this.getMin(lats);
           let lat_max = this.getMax(lats);
-          let extent = [lon_min, lat_min, lon_max, lat_max];
+          self.isochroneBbox = [lon_min, lat_min, lon_max, lat_max];
+          self.isochroneBboxReversed = [lat_min, lon_min, lat_max, lon_max];
 
-          let bounds = coordinates.reduce(function(bounds, coord) {
-            return bounds.extend(coord);
-          }, new window.mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+          // ALL REDUNDANT:
+          // let cellSide = 0.5;
+          // let options = { units: "kilometers" };
+          // let grid = turf.pointGrid(extent, cellSide, options);
 
-          let cellSide = 0.5;
-          let options = { units: "kilometers" };
-          let grid = turf.pointGrid(extent, cellSide, options);
+          // // Filter out points outside our polygon
+          // let scaledPoly = turf.transformScale(poly, 0.5);
+          // let grid_within = grid.features.filter(point =>
+          //   point
+          //     ? turf.booleanPointInPolygon(
+          //         turf.point(point.geometry.coordinates),
+          //         poly
+          //       ) &&
+          //       !turf.booleanPointInPolygon(
+          //         turf.point(point.geometry.coordinates),
+          //         scaledPoly
+          //       )
+          //     : false
+          // );
 
-          // // Check if the points are within the actual polygon:
-          // let pt = turf.point(this.selectedCoordinates);
-          // var poly = turf.polygon([coordinates]);
-          // let check = turf.booleanPointInPolygon(pt, poly);
+          // // Add markers to map
+          // grid_within.forEach(function(marker) {
+          //   //self.addMarkerToMap(marker.geometry.coordinates);
+          //   self.allPoints.push(turf.point(marker.geometry.coordinates));
+          // });
 
-          // Filter out points outside our polygon
-          let scaledPoly = turf.transformScale(poly, 0.5);
-          let grid_within = grid.features.filter(point =>
-            point
-              ? turf.booleanPointInPolygon(
-                  turf.point(point.geometry.coordinates),
-                  poly
-                ) &&
-                !turf.booleanPointInPolygon(
-                  turf.point(point.geometry.coordinates),
-                  scaledPoly
-                )
-              : false
-          );
-
-          // Add markers to map
-          grid_within.forEach(function(marker) {
-            //self.addMarkerToMap(marker.geometry.coordinates);
-            self.allPoints.push(turf.point(marker.geometry.coordinates));
-          });
-          self.map.fitBounds(bounds, {
-            padding: { top: 5, bottom: 5, left: 5, right: 5 }
-          });
-
-          // Create clusters from the grid points
-          var clustered = turf.clustersKmeans(
-            turf.featureCollection(self.allPoints),
-            { numberOfClusters: 20 }
-          );
-
-          // Iterate over each cluster
-          turf.clusterEach(clustered, "cluster", function(
-            cluster,
-            clusterValue,
-            currentIndex
-          ) {
-            let clusterCenter = turf.center(cluster);
-            if (
-              turf.booleanPointInPolygon(
-                turf.point(clusterCenter.geometry.coordinates),
-                poly
-              )
-            ) {
-              self.clusteredPoints.push(clusterCenter);
-              //self.addMarkerToMap(clusterCenter.geometry.coordinates);
-              // Get weather for the center of the cluster and add icon to the map:
-              self.getPointWeather(clusterCenter.geometry.coordinates, false);
-            }
-          });
+          // // Create clusters from the grid points
+          // var clustered = turf.clustersKmeans(
+          //   turf.featureCollection(self.allPoints),
+          //   { numberOfClusters: 20 }
+          // );
+          // // Iterate over each cluster
+          // turf.clusterEach(clustered, "cluster", function(
+          //   cluster,
+          //   clusterValue,
+          //   currentIndex
+          // ) {
+          //   let clusterCenter = turf.center(cluster);
+          //   if (
+          //     turf.booleanPointInPolygon(
+          //       turf.point(clusterCenter.geometry.coordinates),
+          //       poly
+          //     )
+          //   ) {
+          //     self.clusteredPoints.push(clusterCenter);
+          //     // Get weather for the center of the cluster and add icon to the map:
+          //     self.getPointWeather(clusterCenter.geometry.coordinates, false);
+          //   }
+          // });
         })
         .catch(e => {
           console.log("error", e);
@@ -1036,6 +1285,28 @@ export default {
         }
       });
     },
+    addPolygon(id, coords) {
+      this.map.addLayer({
+        id: "shape_" + id,
+        type: "fill",
+        source: {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "Polygon",
+              coordinates: [coords]
+            }
+          }
+        },
+        paint: {
+          "fill-color": "#888888",
+          "fill-opacity": 0.4
+        }
+      });
+      console.log(this.map.getStyle().layers);
+    },
     removeRoute() {
       if (this.map.getSource("route")) {
         this.map.removeLayer("route");
@@ -1045,11 +1316,30 @@ export default {
       }
     },
     stillLoading() {
-      this.removeInteractive()
+      this.removeInteractive();
     },
     finishedLoading() {
-      this.addInteractive()
+      this.addInteractive();
+    },
+    geolocation() {
+      console.log("Run user geo location");
+      // ask the user for a location
+      let self = this;
+      // navigator.geolocation.getCurrentPosition(this.buildUrl, this.geoError);
+      let options = { enableHighAccuracy: false };
+      this.$getLocation(options).then(coordinates => {
+        self.selectedCoordinates = [coordinates.lng, coordinates.lat];
+        let place = self
+          .getNamedPlace(self.selectedCoordinates)
+          .then(function(res) {
+            self.selectedName = res.data.features[0].text;
+            self.getMetWeatherForecast(self.selectedCoordinates);
+          });
+      });
     }
+  },
+  beforeMount() {
+    this.geolocation();
   }
 };
 </script>

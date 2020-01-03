@@ -35,22 +35,18 @@ https://wiki.openstreetmap.org/wiki/Overpass_API/Overpass_QL#Global_bounding_box
 
 ## TODO:
 Data:
-- Implement Entur.no API to get oublic transporation routes in Norway.
-- Implement Overpass API to find relevant places within the shape area (eg. beaches or mountain, forest etc)
-- Add ebb and tide information
+- Implement Entur.no API to get public transportation routes in Norway.
+- Add ebb and tide information?
 
 UI/UX:
 - Remove layers, markers etc. when new search (place, profile of transport and time) is run
-- Show information somewhere static?
+- Show information somewhere static
 - Hide weather icons on zoom out [might have to switch to marker layer, to be able to do this.]
-
-Functionality:
-- Implement a vueistic way for handling UI, triggering events etc
-- Prompt user for location on load
-
+- Add loading logic when quering data from APIs
 
 
 ## Fixed:
+- Implement Overpass API to find relevant places within the shape area (eg. beaches or mountain, forest etc)
 - Zoom the map to fit the isochrone shape (zoom in/out after the bbox of the shape)
 - Isochrone: color the shape in levels? [found solution - need to redo it]
 - Get bounding box or just use polygon from Isochrone shape to use as shape to query the MET API from
@@ -58,6 +54,8 @@ Functionality:
 - Add a to/from shortest path when clicking on a location
 - Get place name or address based on lat,lng? 
 - Get lat/lng from a marker and calculate the shortest trip (how to access the markers info?)
+- Implement a vueistic way for handling UI, triggering events etc
+- Prompt user for location on load
 
 ## External documentation:
 

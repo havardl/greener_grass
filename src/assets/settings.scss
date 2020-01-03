@@ -1,0 +1,44 @@
+// @import 'node_modules/bootstrap/scss/bootstrap';
+// @import 'node_modules/bootstrap-vue/src/index.scss';
+@import url("https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap");
+
+html,
+body {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+}
+
+// Colors
+$color-dark-blue: #0b2b3e;
+$color-blue: #346dc9;
+$color-green: #3f8584;
+$color-red: #c52c1a;
+$color-orange: #fc6543;
+$color-grey: #e4e3dc;
+$color-grey-2: #e3e3db;
+$color-white: #fff;
+
+// Breakpoints
+$bp-narrow: 1100px;
+$bp-wide: 1500px;
+$bp-mobile: 800px;
+
+// Nav Bar Offset
+$nav-bar-offset: 60px;
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) { }
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {  }
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {  }
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {  }
+
+// Exports for use in Javascript
+:export {
+  bpNarrow: $bp-narrow;
+  bpWide: $bp-wide;
+  navBarOffset: $nav-bar-offset;
+  colorRed: $color-red;
+}

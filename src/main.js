@@ -5,10 +5,10 @@ import store from './store'
 import './registerServiceWorker'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faWalking, faCar, faBiking, faUserSecret } from '@fortawesome/free-solid-svg-icons'
+import { faWater, faMountain, faClock, faWalking, faCar, faBiking } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-library.add(faWalking, faCar, faBiking, faUserSecret)
+library.add(faWater, faMountain, faClock, faWalking, faCar, faBiking)
 
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 
@@ -21,6 +21,9 @@ Vue.use(BootstrapVue);
 /* vendor stuff */
 import "../node_modules/mapbox-gl/dist/mapbox-gl.css";
 import "../node_modules/@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
+
+import VueGeolocation from 'vue-browser-geolocation';
+Vue.use(VueGeolocation);
 
 Vue.config.productionTip = false
 
