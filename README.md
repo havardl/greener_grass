@@ -43,7 +43,11 @@ UI/UX:
 - Show information somewhere static
 - Hide weather icons on zoom out [might have to switch to marker layer, to be able to do this.]
 - Add loading logic when quering data from APIs
+- Add night mode
 
+Functional:
+- Chain axios calls?
+- 
 
 ## Fixed:
 - Implement Overpass API to find relevant places within the shape area (eg. beaches or mountain, forest etc)

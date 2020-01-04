@@ -15,7 +15,12 @@
       <div
         class="menu-item mt-2"
         @mouseover="
-          [(showTime = false), (showDestination = true), (showTravel = false)]
+          [
+            (showTime = false),
+            (showDestination = true),
+            (showTravel = false),
+            (showMapLayer = false)
+          ]
         "
       >
         <div class="menu-icon" @click="showDestination = !showDestination">
@@ -51,7 +56,12 @@
       <div
         class="menu-item mt-2"
         @mouseover="
-          [(showTime = false), (showTravel = true), (showDestination = false)]
+          [
+            (showTime = false),
+            (showTravel = true),
+            (showDestination = false),
+            (showMapLayer = false)
+          ]
         "
       >
         <div class="menu-icon" @click="showTravel = !showTravel">
@@ -95,7 +105,12 @@
       <div
         class="menu-item mt-2"
         @mouseover="
-          [(showTime = true), (showTravel = false), (showDestination = false)]
+          [
+            (showTime = true),
+            (showTravel = false),
+            (showDestination = false),
+            (showMapLayer = false)
+          ]
         "
       >
         <div class="menu-icon" @click="showTime = !showTime">
@@ -123,7 +138,12 @@
       <div
         class="menu-item mt-2"
         @mouseover="
-          [(showTime = false), (showDestination = false), (showTravel = false), (showMapLayer=true)]
+          [
+            (showTime = false),
+            (showDestination = false),
+            (showTravel = false),
+            (showMapLayer = true)
+          ]
         "
       >
         <div class="menu-icon" @click="showMapLayer = !showMapLayer">
@@ -158,7 +178,7 @@
                   size="lg"
                   @click="mapStyle = 'dark-v10'"
                 />
-              </b-button>              
+              </b-button>
 
               <b-button variant="light">
                 <font-awesome-icon
@@ -166,12 +186,11 @@
                   size="lg"
                   @click="mapStyle = 'outdoors-v11'"
                 />
-              </b-button>              
+              </b-button>
             </b-button-group>
           </div>
         </transition>
       </div>
-
     </div>
   </div>
 </template>
@@ -428,6 +447,8 @@ export default {
       data: null,
       token:
         "pk.eyJ1IjoiaGF2YXJkbCIsImEiOiJtSTFleXg4In0.bCnuP121PLOPrqhdwUwYDA",
+      nightMode: false,
+      nightTime: 15,
       selectedCoordinates: [],
       selectedMarker: Object,
       selectedName: "",
@@ -458,6 +479,9 @@ export default {
     window.mapboxgl = require("mapbox-gl");
     window.MapboxGeocoder = require("@mapbox/mapbox-gl-geocoder");
     window.queryOverpass = require("@derhuerst/query-overpass");
+    window.SunCalc = require("suncalc");
+
+    this.init();
     this.createMap();
   },
   computed: {
@@ -480,7 +504,7 @@ export default {
   },
   watch: {
     mapStyle() {
-      this.map.setStyle('mapbox://styles/mapbox/' + this.mapStyle);
+      this.map.setStyle("mapbox://styles/mapbox/" + this.mapStyle);
     },
     data() {
       // When weather data is set (a bit messy and unintuitive)
@@ -559,23 +583,23 @@ export default {
           way_coords.push(way_coords[0]);
 
           let area = [];
-          way_coords.forEach(function(point){
-            area.push(turf.point(point))
-          })
+          way_coords.forEach(function(point) {
+            area.push(turf.point(point));
+          });
 
           var features = turf.featureCollection(area);
-          var center = turf.center(features);   
-          
+          var center = turf.center(features);
+
           self.clusteredPoints.push(center);
           // Get weather for the center of the cluster and add icon to the map:
-          self.getPointWeather(center.geometry.coordinates, false);          
+          self.getPointWeather(center.geometry.coordinates, false);
 
           geojson.features.push({
             type: "Feature",
             geometry: {
               coordinates: [way_coords],
               type: "Polygon"
-            },
+            }
           });
           // self.addPolygon(index, way_coords);
           // index += 1;
@@ -584,9 +608,9 @@ export default {
       } else {
         // Only single points:
         console.log(nodes);
-          nodes.forEach(function(point){
-            self.getPointWeather([point.lon, point.lat], false); 
-          })        
+        nodes.forEach(function(point) {
+          self.getPointWeather([point.lon, point.lat], false);
+        });
       }
     },
     zoomToBounds() {
@@ -627,6 +651,14 @@ export default {
           console.error(e);
         });
       return res;
+    },
+    init() {
+      let currentTime = new Date().getHours();
+      if (currentTime >= this.nightTime) {
+        // Set to dark map after 18:00
+        this.mapStyle = "dark-v10";
+        this.nightMode = true;
+      }
     },
     createMap() {
       let self = this;
@@ -835,7 +867,10 @@ export default {
                 self.data.precipitation.maxvalue +
                 "</p>" +
                 "<img class'weather-icon' src=" +
-                self.getLocalWeatherIcon(self.data.symbol.number) +
+                self.getLocalWeatherIcon(
+                  self.data.symbol.number,
+                  this.selectedCoordinates
+                ) +
                 " />"
             )
         )
@@ -855,7 +890,7 @@ export default {
       }
       return url;
     },
-    getLocalWeatherIcon(symbol_id) {
+    getLocalWeatherIcon(symbol_id, coordinates) {
       symbol_id = parseInt(symbol_id);
       let basic = [
         4,
@@ -879,12 +914,29 @@ export default {
         49,
         50
       ];
+
+      let lng = coordinates[0];
+      let lat = coordinates[1];      
+      let currentTime = new Date();
+      let times = window.SunCalc.getTimes(currentTime, lng, lat)
+      let sunrise = times.sunrise.getHours() + ':' + times.sunrise.getMinutes();
+      let sunset = times.sunset.getHours() + ':' + times.sunset.getMinutes();
+
+      let now = currentTime;
+      let from = sunrise;
+      let to = sunset;
+      let dark = true;
+
+      if(now >= from && now <= to) {
+        dark = false;
+      }
+
       let url = "";
       if (basic.includes(symbol_id)) {
         url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
       } else {
         url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
-        url = url + "d";
+        url = dark ? url + "n" : url + "d";
       }
       return "img/svg/" + url + ".svg";
     },
@@ -1175,7 +1227,7 @@ export default {
 
       let marker_symbol = document.createElement("div");
       marker_symbol.className = "marker-symbol";
-      let symbol = self.getLocalWeatherIcon(data.symbol.number);
+      let symbol = self.getLocalWeatherIcon(data.symbol.number, coordinates);
       marker_symbol.style.backgroundImage = "url(" + symbol + ")";
       marker_symbol.dataset.lng = lng;
       marker_symbol.dataset.lat = lat;
