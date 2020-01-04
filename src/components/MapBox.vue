@@ -119,6 +119,59 @@
           </div>
         </transition>
       </div>
+
+      <div
+        class="menu-item mt-2"
+        @mouseover="
+          [(showTime = false), (showDestination = false), (showTravel = false), (showMapLayer=true)]
+        "
+      >
+        <div class="menu-icon" @click="showMapLayer = !showMapLayer">
+          <font-awesome-icon
+            :icon="['fas', 'layer-group']"
+            size="lg"
+            :style="{ color: '#757575' }"
+          />
+        </div>
+        <transition name="slide">
+          <div class="menu-content" v-if="showMapLayer">
+            <b-button-group size="sm" style="padding-top:2px;">
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['far', 'map']"
+                  size="lg"
+                  @click="mapStyle = 'light-v10'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'satellite']"
+                  size="lg"
+                  @click="mapStyle = 'satellite-v9'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'map']"
+                  size="lg"
+                  @click="mapStyle = 'dark-v10'"
+                />
+              </b-button>              
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'hiking']"
+                  size="lg"
+                  @click="mapStyle = 'outdoors-v11'"
+                />
+              </b-button>              
+            </b-button-group>
+          </div>
+        </transition>
+      </div>
+
     </div>
   </div>
 </template>
@@ -370,6 +423,7 @@ export default {
   data: function() {
     return {
       map: null,
+      mapStyle: "light-v10",
       geocoder: null,
       data: null,
       token:
@@ -388,6 +442,7 @@ export default {
       showTravel: false,
       showTime: false,
       showDestination: false,
+      showMapLayer: false,
       uiTimeInterval: [15, 30, 45, 60],
       profile: "cycling",
       destination: "beach",
@@ -424,6 +479,9 @@ export default {
     }
   },
   watch: {
+    mapStyle() {
+      this.map.setStyle('mapbox://styles/mapbox/' + this.mapStyle);
+    },
     data() {
       // When weather data is set (a bit messy and unintuitive)
       this.getIso();
@@ -576,7 +634,7 @@ export default {
 
       const mapOptions = {
         container: "map",
-        style: "mapbox://styles/mapbox/light-v10",
+        style: "mapbox://styles/mapbox/" + this.mapStyle,
         center: this.center,
         zoom: 3.5,
         accessToken: this.token,
@@ -585,6 +643,7 @@ export default {
 
       // init the map
       this.map = new window.mapboxgl.Map(mapOptions);
+      this.map.addControl(new mapboxgl.NavigationControl());
       this.geocoder = new window.MapboxGeocoder({
         // Settings from: https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md
         accessToken: this.token,
@@ -666,6 +725,7 @@ export default {
         self.showTime = false;
         self.showTravel = false;
         self.showDestination = false;
+        self.showMapLayer = false;
       });
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
@@ -1135,7 +1195,7 @@ export default {
 
       // Get the place name using MapBox's reverese geocoder
       let place = this.getNamedPlace(coordinates).then(function(res) {
-        marker_text.innerHTML = res.data.features[1].text;
+        marker_text.innerHTML = res.data.features[0].text;
         marker_attr.innerHTML =
           data.minTemperature.value +
           " - " +
@@ -1150,8 +1210,6 @@ export default {
               .setHTML(
                 "<h5>" +
                   res.data.features[0].text +
-                  ", " +
-                  res.data.features[1].text +
                   "</h5>" +
                   "<p><b>Temp (celsius)</b>: mellom " +
                   data.minTemperature.value +
