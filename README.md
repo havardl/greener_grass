@@ -77,6 +77,17 @@ https://api.sehavniva.no/tideapi.php?lat=68.79889&lon=16.53139&fromtime=2019-12-
 http://api.sehavniva.no/tideapi.php?lat=68.79889&lon=16.53139&fromtime=2019-12-28T00%3A00&totime=2020-01-29T00%3A00&datatype=tab&refcode=cd&place=&file=&lang=nb&interval=60&dst=0&tzone=0&tide_request=locationdata
 
 
+### Overpass
+
+"leisure"="nature_reserve"
+"leisure"="park"
+"leisure"="swimming_pool"
+"natural"="wood" (big)
+
+Most relevant:
+"sport"="swimming"
+
+
 ## Project setup
 ```
 npm install

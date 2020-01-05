@@ -37,7 +37,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'mountain']"
                   size="lg"
-                  @click="destination = 'peak'"
+                  @click="$store.commit('destination', 'peak')"
                 />
               </b-button>
 
@@ -45,7 +45,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'water']"
                   size="lg"
-                  @click="destination = 'beach'"
+                  @click="$store.commit('destination', 'beach')"
                 />
               </b-button>
             </b-button-group>
@@ -78,7 +78,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'walking']"
                   size="lg"
-                  @click="profile = 'walking'"
+                  @click="$store.commit('profile', 'walking')"
                 />
               </b-button>
 
@@ -86,7 +86,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'biking']"
                   size="lg"
-                  @click="profile = 'cycling'"
+                  @click="$store.commit('profile', 'cycling')"
                 />
               </b-button>
 
@@ -94,7 +94,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'car']"
                   size="lg"
-                  @click="profile = 'driving'"
+                  @click="$store.commit('profile', 'driving')"
                 />
               </b-button>
             </b-button-group>
@@ -425,6 +425,7 @@
 </style>
 
 <script>
+import { mapState } from 'vuex'
 import * as turf from "@turf/turf";
 import axios from "axios";
 import VueSlider from "vue-slider-component";
@@ -465,8 +466,8 @@ export default {
       showDestination: false,
       showMapLayer: false,
       uiTimeInterval: [15, 30, 45, 60],
-      profile: "cycling",
-      destination: "beach",
+      // profile: "cycling",
+      // destination: "beach",
       minutes: 15,
       isochroneCoordinates: [],
       isochronePoly: null,
@@ -485,6 +486,16 @@ export default {
     this.createMap();
   },
   computed: {
+    ...mapState([
+      'profile',
+      'destination'
+    ]),
+    // profile() {
+    //   return this.$store.state.profile;
+    // },
+    // destination() {
+    //   return this.$store.state.destination;
+    // },
     currentProfile() {
       if (this.profile === "walking") {
         return "walking";
@@ -916,18 +927,18 @@ export default {
       ];
 
       let lng = coordinates[0];
-      let lat = coordinates[1];      
+      let lat = coordinates[1];
       let currentTime = new Date();
-      let times = window.SunCalc.getTimes(currentTime, lng, lat)
-      let sunrise = times.sunrise.getHours() + ':' + times.sunrise.getMinutes();
-      let sunset = times.sunset.getHours() + ':' + times.sunset.getMinutes();
+      let times = window.SunCalc.getTimes(currentTime, lng, lat);
+      let sunrise = times.sunrise.getHours() + ":" + times.sunrise.getMinutes();
+      let sunset = times.sunset.getHours() + ":" + times.sunset.getMinutes();
 
       let now = currentTime;
       let from = sunrise;
       let to = sunset;
       let dark = true;
 
-      if(now >= from && now <= to) {
+      if (now >= from && now <= to) {
         dark = false;
       }
 
@@ -940,10 +951,17 @@ export default {
       }
       return "img/svg/" + url + ".svg";
     },
-    getWeather: function(place) {
+    async getWeather(place) {
       this.selectedCoordinates = place.result.center;
       this.selectedName = place.result.text;
-      this.getMetWeatherForecast(this.selectedCoordinates);
+      // this.getMetWeatherForecast(this.selectedCoordinates);
+      try {
+        await this.$store.dispatch("weather", this.selectedCoordinates);
+      } catch (ex) {
+        this.error = "Failed to load data";
+      } finally {
+        console.log("finished", this.$store.state.weather)
+      }
     },
     shittyTimeRounder: function(a = new Date()) {
       if (typeof a === "number") {
