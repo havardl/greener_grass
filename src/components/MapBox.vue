@@ -684,7 +684,7 @@ export default {
 
       // init the map
       this.map = new window.mapboxgl.Map(mapOptions);
-      this.map.addControl(new mapboxgl.NavigationControl());
+      this.map.addControl(new mapboxgl.NavigationControl(), 'bottom-left');
       this.geocoder = new window.MapboxGeocoder({
         // Settings from: https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md
         accessToken: this.token,
