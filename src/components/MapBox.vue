@@ -952,14 +952,14 @@ export default {
     async getWeather(place) {
       this.selectedCoordinates = place.result.center;
       this.selectedName = place.result.text;
-      // this.getMetWeatherForecast(this.selectedCoordinates);
-      try {
-        await this.$store.dispatch("weather", this.selectedCoordinates)
-      } catch (ex) {
-        let error = "Failed to load data";
-      } finally {
-        console.log("finished", this.$store.state.weather);
-      }
+      this.getMetWeatherForecast(this.selectedCoordinates);
+      // try {
+      //   await this.$store.dispatch("weather", this.selectedCoordinates)
+      // } catch (ex) {
+      //   let error = "Failed to load data";
+      // } finally {
+      //   console.log("finished", this.$store.state.weather);
+      // }
     },
     shittyTimeRounder: function(a = new Date()) {
       if (typeof a === "number") {
