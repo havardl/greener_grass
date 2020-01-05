@@ -15,7 +15,12 @@
       <div
         class="menu-item mt-2"
         @mouseover="
-          [(showTime = false), (showDestination = true), (showTravel = false)]
+          [
+            (showTime = false),
+            (showDestination = true),
+            (showTravel = false),
+            (showMapLayer = false)
+          ]
         "
       >
         <div class="menu-icon" @click="showDestination = !showDestination">
@@ -32,7 +37,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'mountain']"
                   size="lg"
-                  @click="destination = 'peak'"
+                  @click="$store.commit('destination', 'peak')"
                 />
               </b-button>
 
@@ -40,7 +45,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'water']"
                   size="lg"
-                  @click="destination = 'beach'"
+                  @click="$store.commit('destination', 'beach')"
                 />
               </b-button>
             </b-button-group>
@@ -51,7 +56,12 @@
       <div
         class="menu-item mt-2"
         @mouseover="
-          [(showTime = false), (showTravel = true), (showDestination = false)]
+          [
+            (showTime = false),
+            (showTravel = true),
+            (showDestination = false),
+            (showMapLayer = false)
+          ]
         "
       >
         <div class="menu-icon" @click="showTravel = !showTravel">
@@ -68,7 +78,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'walking']"
                   size="lg"
-                  @click="profile = 'walking'"
+                  @click="$store.commit('profile', 'walking')"
                 />
               </b-button>
 
@@ -76,7 +86,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'biking']"
                   size="lg"
-                  @click="profile = 'cycling'"
+                  @click="$store.commit('profile', 'cycling')"
                 />
               </b-button>
 
@@ -84,7 +94,7 @@
                 <font-awesome-icon
                   :icon="['fas', 'car']"
                   size="lg"
-                  @click="profile = 'driving'"
+                  @click="$store.commit('profile', 'driving')"
                 />
               </b-button>
             </b-button-group>
@@ -95,7 +105,12 @@
       <div
         class="menu-item mt-2"
         @mouseover="
-          [(showTime = true), (showTravel = false), (showDestination = false)]
+          [
+            (showTime = true),
+            (showTravel = false),
+            (showDestination = false),
+            (showMapLayer = false)
+          ]
         "
       >
         <div class="menu-icon" @click="showTime = !showTime">
@@ -116,6 +131,63 @@
               :contained="true"
               :drag-on-click="true"
             ></vue-slider>
+          </div>
+        </transition>
+      </div>
+
+      <div
+        class="menu-item mt-2"
+        @mouseover="
+          [
+            (showTime = false),
+            (showDestination = false),
+            (showTravel = false),
+            (showMapLayer = true)
+          ]
+        "
+      >
+        <div class="menu-icon" @click="showMapLayer = !showMapLayer">
+          <font-awesome-icon
+            :icon="['fas', 'layer-group']"
+            size="lg"
+            :style="{ color: '#757575' }"
+          />
+        </div>
+        <transition name="slide">
+          <div class="menu-content" v-if="showMapLayer">
+            <b-button-group size="sm" style="padding-top:2px;">
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['far', 'map']"
+                  size="lg"
+                  @click="mapStyle = 'light-v10'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'satellite']"
+                  size="lg"
+                  @click="mapStyle = 'satellite-v9'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'map']"
+                  size="lg"
+                  @click="mapStyle = 'dark-v10'"
+                />
+              </b-button>
+
+              <b-button variant="light">
+                <font-awesome-icon
+                  :icon="['fas', 'hiking']"
+                  size="lg"
+                  @click="mapStyle = 'outdoors-v11'"
+                />
+              </b-button>
+            </b-button-group>
           </div>
         </transition>
       </div>
@@ -353,6 +425,7 @@
 </style>
 
 <script>
+import { mapState, mapGetters } from "vuex";
 import * as turf from "@turf/turf";
 import axios from "axios";
 import VueSlider from "vue-slider-component";
@@ -370,10 +443,13 @@ export default {
   data: function() {
     return {
       map: null,
+      mapStyle: "light-v10",
       geocoder: null,
       data: null,
       token:
         "pk.eyJ1IjoiaGF2YXJkbCIsImEiOiJtSTFleXg4In0.bCnuP121PLOPrqhdwUwYDA",
+      nightMode: false,
+      nightTime: 15,
       selectedCoordinates: [],
       selectedMarker: Object,
       selectedName: "",
@@ -388,9 +464,10 @@ export default {
       showTravel: false,
       showTime: false,
       showDestination: false,
+      showMapLayer: false,
       uiTimeInterval: [15, 30, 45, 60],
-      profile: "cycling",
-      destination: "beach",
+      // profile: "cycling",
+      // destination: "beach",
       minutes: 15,
       isochroneCoordinates: [],
       isochronePoly: null,
@@ -403,9 +480,20 @@ export default {
     window.mapboxgl = require("mapbox-gl");
     window.MapboxGeocoder = require("@mapbox/mapbox-gl-geocoder");
     window.queryOverpass = require("@derhuerst/query-overpass");
+    window.SunCalc = require("suncalc");
+
+    this.init();
     this.createMap();
   },
   computed: {
+    ...mapState(["profile", "destination"]),
+    ...mapGetters(["formatWeather"]),
+    // profile() {
+    //   return this.$store.state.profile;
+    // },
+    // destination() {
+    //   return this.$store.state.destination;
+    // },
     currentProfile() {
       if (this.profile === "walking") {
         return "walking";
@@ -424,6 +512,9 @@ export default {
     }
   },
   watch: {
+    mapStyle() {
+      this.map.setStyle("mapbox://styles/mapbox/" + this.mapStyle);
+    },
     data() {
       // When weather data is set (a bit messy and unintuitive)
       this.getIso();
@@ -501,23 +592,23 @@ export default {
           way_coords.push(way_coords[0]);
 
           let area = [];
-          way_coords.forEach(function(point){
-            area.push(turf.point(point))
-          })
+          way_coords.forEach(function(point) {
+            area.push(turf.point(point));
+          });
 
           var features = turf.featureCollection(area);
-          var center = turf.center(features);   
-          
+          var center = turf.center(features);
+
           self.clusteredPoints.push(center);
           // Get weather for the center of the cluster and add icon to the map:
-          self.getPointWeather(center.geometry.coordinates, false);          
+          self.getPointWeather(center.geometry.coordinates, false);
 
           geojson.features.push({
             type: "Feature",
             geometry: {
               coordinates: [way_coords],
               type: "Polygon"
-            },
+            }
           });
           // self.addPolygon(index, way_coords);
           // index += 1;
@@ -526,9 +617,9 @@ export default {
       } else {
         // Only single points:
         console.log(nodes);
-          nodes.forEach(function(point){
-            self.getPointWeather([point.lon, point.lat], false); 
-          })        
+        nodes.forEach(function(point) {
+          self.getPointWeather([point.lon, point.lat], false);
+        });
       }
     },
     zoomToBounds() {
@@ -570,13 +661,21 @@ export default {
         });
       return res;
     },
+    init() {
+      let currentTime = new Date().getHours();
+      if (currentTime >= this.nightTime) {
+        // Set to dark map after 18:00
+        this.mapStyle = "dark-v10";
+        this.nightMode = true;
+      }
+    },
     createMap() {
       let self = this;
       mapboxgl.accessToken = this.token;
 
       const mapOptions = {
         container: "map",
-        style: "mapbox://styles/mapbox/light-v10",
+        style: "mapbox://styles/mapbox/" + this.mapStyle,
         center: this.center,
         zoom: 3.5,
         accessToken: this.token,
@@ -585,6 +684,7 @@ export default {
 
       // init the map
       this.map = new window.mapboxgl.Map(mapOptions);
+      this.map.addControl(new mapboxgl.NavigationControl());
       this.geocoder = new window.MapboxGeocoder({
         // Settings from: https://github.com/mapbox/mapbox-gl-geocoder/blob/master/API.md
         accessToken: this.token,
@@ -666,6 +766,7 @@ export default {
         self.showTime = false;
         self.showTravel = false;
         self.showDestination = false;
+        self.showMapLayer = false;
       });
       this.geocoder.on("result", function(result) {
         // Fired when the geocoder returns a selected result
@@ -775,7 +876,10 @@ export default {
                 self.data.precipitation.maxvalue +
                 "</p>" +
                 "<img class'weather-icon' src=" +
-                self.getLocalWeatherIcon(self.data.symbol.number) +
+                self.getLocalWeatherIcon(
+                  self.data.symbol.number,
+                  this.selectedCoordinates
+                ) +
                 " />"
             )
         )
@@ -795,7 +899,7 @@ export default {
       }
       return url;
     },
-    getLocalWeatherIcon(symbol_id) {
+    getLocalWeatherIcon(symbol_id, coordinates) {
       symbol_id = parseInt(symbol_id);
       let basic = [
         4,
@@ -819,19 +923,43 @@ export default {
         49,
         50
       ];
+
+      let lng = coordinates[0];
+      let lat = coordinates[1];
+      let currentTime = new Date();
+      let times = window.SunCalc.getTimes(currentTime, lng, lat);
+      let sunrise = times.sunrise.getHours() + ":" + times.sunrise.getMinutes();
+      let sunset = times.sunset.getHours() + ":" + times.sunset.getMinutes();
+
+      let now = currentTime;
+      let from = sunrise;
+      let to = sunset;
+      let dark = true;
+
+      if (now >= from && now <= to) {
+        dark = false;
+      }
+
       let url = "";
       if (basic.includes(symbol_id)) {
         url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
       } else {
         url = symbol_id >= 10 ? symbol_id : "0" + symbol_id;
-        url = url + "d";
+        url = dark ? url + "n" : url + "d";
       }
       return "img/svg/" + url + ".svg";
     },
-    getWeather: function(place) {
+    async getWeather(place) {
       this.selectedCoordinates = place.result.center;
       this.selectedName = place.result.text;
       this.getMetWeatherForecast(this.selectedCoordinates);
+      // try {
+      //   await this.$store.dispatch("weather", this.selectedCoordinates)
+      // } catch (ex) {
+      //   let error = "Failed to load data";
+      // } finally {
+      //   console.log("finished", this.$store.state.weather);
+      // }
     },
     shittyTimeRounder: function(a = new Date()) {
       if (typeof a === "number") {
@@ -1115,7 +1243,7 @@ export default {
 
       let marker_symbol = document.createElement("div");
       marker_symbol.className = "marker-symbol";
-      let symbol = self.getLocalWeatherIcon(data.symbol.number);
+      let symbol = self.getLocalWeatherIcon(data.symbol.number, coordinates);
       marker_symbol.style.backgroundImage = "url(" + symbol + ")";
       marker_symbol.dataset.lng = lng;
       marker_symbol.dataset.lat = lat;
@@ -1135,7 +1263,7 @@ export default {
 
       // Get the place name using MapBox's reverese geocoder
       let place = this.getNamedPlace(coordinates).then(function(res) {
-        marker_text.innerHTML = res.data.features[1].text;
+        marker_text.innerHTML = res.data.features[0].text;
         marker_attr.innerHTML =
           data.minTemperature.value +
           " - " +
@@ -1150,8 +1278,6 @@ export default {
               .setHTML(
                 "<h5>" +
                   res.data.features[0].text +
-                  ", " +
-                  res.data.features[1].text +
                   "</h5>" +
                   "<p><b>Temp (celsius)</b>: mellom " +
                   data.minTemperature.value +
