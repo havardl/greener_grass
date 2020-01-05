@@ -425,7 +425,7 @@
 </style>
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import * as turf from "@turf/turf";
 import axios from "axios";
 import VueSlider from "vue-slider-component";
@@ -489,6 +489,9 @@ export default {
     ...mapState([
       'profile',
       'destination'
+    ]),
+    ...mapGetters([
+      'formatWeather'
     ]),
     // profile() {
     //   return this.$store.state.profile;
