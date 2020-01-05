@@ -425,7 +425,7 @@
 </style>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapState, mapGetters } from "vuex";
 import * as turf from "@turf/turf";
 import axios from "axios";
 import VueSlider from "vue-slider-component";
@@ -486,13 +486,8 @@ export default {
     this.createMap();
   },
   computed: {
-    ...mapState([
-      'profile',
-      'destination'
-    ]),
-    ...mapGetters([
-      'formatWeather'
-    ]),
+    ...mapState(["profile", "destination"]),
+    ...mapGetters(["formatWeather"]),
     // profile() {
     //   return this.$store.state.profile;
     // },
@@ -959,11 +954,11 @@ export default {
       this.selectedName = place.result.text;
       // this.getMetWeatherForecast(this.selectedCoordinates);
       try {
-        await this.$store.dispatch("weather", this.selectedCoordinates);
+        await this.$store.dispatch("weather", this.selectedCoordinates)
       } catch (ex) {
-        this.error = "Failed to load data";
+        let error = "Failed to load data";
       } finally {
-        console.log("finished", this.$store.state.weather)
+        console.log("finished", this.$store.state.weather);
       }
     },
     shittyTimeRounder: function(a = new Date()) {

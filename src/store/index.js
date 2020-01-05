@@ -5,12 +5,24 @@ import axios from "axios";
 Vue.use(Vuex);
 
 /*
-* Helper functions 
+* Helper functions for our getters
 */
 function returnObjectData(arr) {
   if (typeof arr !== "undefined") {
     return arr[0]["$"];
   }
+}
+
+function shittyTimeRounder(a = new Date()) {
+  if (typeof a === "number") {
+    let b = new Date();
+    b.setHours(b.getHours() + a);
+    a = b;
+  }
+  return new Date(
+    `${a.getFullYear()}/${a.getMonth() + 1}/${a.getDate()} ${a.getHours() +
+      1}:00`
+  );
 }
 
 export default new Vuex.Store({
@@ -60,22 +72,21 @@ export default new Vuex.Store({
       );
       // Filter the data down:
       let symbolWeaterData = weaterData.filter(x => x.symbolProbability)
-      return symbolWeaterData[0]
-      // // Get the prediction where the current time is within the 6 hrs timeframe:
-      // let current_time = this.shittyTimeRounder(new Date()).getTime();
-      // let forecasts = symbolWeaterData.filter(forecast =>
-      //   forecast
-      //     ? new Date(forecast.from).getTime() <= current_time &&
-      //       new Date(forecast.to).getTime() >= current_time
-      //     : false
-      // );
+      // Get the prediction where the current time is within the 6 hrs timeframe:
+      let current_time = shittyTimeRounder(new Date()).getTime();
+      let forecasts = symbolWeaterData.filter(forecast =>
+        forecast
+          ? new Date(forecast.from).getTime() <= current_time &&
+            new Date(forecast.to).getTime() >= current_time
+          : false
+      );
 
-      // // If the time is before the first forecast, just show the first one:
-      // if (forecasts[0] === undefined) {
-      //   return symbolWeaterData[0];
-      // } else {
-      //   return forecasts[0];
-      // }
+      // If the time is before the first forecast, just show the first one:
+      if (forecasts[0] === undefined) {
+        return symbolWeaterData[0];
+      } else {
+        return forecasts[0];
+      }
     }
   },
   mutations: {
